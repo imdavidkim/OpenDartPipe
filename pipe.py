@@ -93,6 +93,23 @@ class Pipe:
         "기타": "E"
     }
 
+    # 2020 스케쥴표
+    reporting_schedules = {
+        "01": {"1분기보고서": "0615|0629", "반기보고서": "0914|0929", "3분기보고서": "1215|1230", "사업보고서": "0504"},
+        "02": {"1분기보고서": "0715|0730", "반기보고서": "1015|1030", "3분기보고서": "0114|0129", "사업보고서": "0529"},
+        "03": {"1분기보고서": "0814|0831", "반기보고서": "1116|1130", "3분기보고서": "0214|0302", "사업보고서": "0629"},
+        "04": {"1분기보고서": "0914|0929", "반기보고서": "1215|1230", "3분기보고서": "0316|0331", "사업보고서": "0729"},
+        "05": {"1분기보고서": "1015|1030", "반기보고서": "0114|0129", "3분기보고서": "0414|0429", "사업보고서": "0831"},
+        "06": {"1분기보고서": "1116|1130", "반기보고서": "0214|0302", "3분기보고서": "0515|0601", "사업보고서": "0928"},
+        "07": {"1분기보고서": "1215|1230", "반기보고서": "0316|0331", "3분기보고서": "0615|0629", "사업보고서": "1029"},
+        "08": {"1분기보고서": "0114|0129", "반기보고서": "0414|0429", "3분기보고서": "0715|0730", "사업보고서": "1130"},
+        "09": {"1분기보고서": "0214|0302", "반기보고서": "0515|0601", "3분기보고서": "0814|0831", "사업보고서": "1229"},
+        "10": {"1분기보고서": "0316|0331", "반기보고서": "0615|0629", "3분기보고서": "0914|0929", "사업보고서": "0129"},
+        "11": {"1분기보고서": "0414|0429", "반기보고서": "0715|0730", "3분기보고서": "1015|1030", "사업보고서": "0228"},
+        "12": {"1분기보고서": "0515|0601", "반기보고서": "0814|0831", "3분기보고서": "1116|1130", "사업보고서": "0330"}
+
+    }
+
     def create(self):
         di.getConfig()
         self.api_key = di.getKey()
@@ -158,18 +175,45 @@ class Pipe:
         if ret:
             return si.get_elestock_json(self.api_key, code)
 
+    def get_shared_reporting(self, base_date):
+        db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["지분공시"]))
+
+    def get_majorevent_reporting(self, base_date):
+        db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"], pblntf_detail_ty=self.pblntf_detail_ty_codes["주요사항보고서"]))
+
+    def get_majorshareholder_reporting(self, base_date):
+        corp_code_list = db.getMajorShareholderReportingInfo(base_date)
+        for corp_code in corp_code_list:
+            result = dart.get_majorstock(corp_code)
+            db.ResultMajorShareholderDataStore(result)
+
+    def get_freecapital_increasing_corp_info(self, base_date):
+        corp_code_list = db.getFreeCapitalIncreaseEventReportingInfo(base_date)
+        for corp_code in corp_code_list:
+            req_list = []
+            for y in range(int(base_date[:4]), int(base_date[:4])-3, -1):
+                for key in self.reprt_ty_codes.keys():
+                    req_list.append([y, self.reprt_ty_codes[key]])
+            for bsns_year, reprt_code in req_list:
+                print(dart.get_fnlttSinglAcnt(corp_code, bsns_year, reprt_code))
+
+            # result = dart.get_fnlttSinglAcnt(corp_code, )
+
+
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
     # sec_code = '005930'
     # print(aa.get_company_info(sec_code))
     # print(aa.get_fnlttSinglAcnt(sec_code, "2020", aa.reprt_ty_codes["3분기보고서"]))
-    # db.ResultListDataStore
+    # db.ResultListDataStore(dart.get_list(bgn_de="20201214", pblntf_ty='B', pblntf_detail_ty="B001"))
+    # date = "20201214"
+    # db.ResultListDataStore(dart.get_list(bgn_de=date, pblntf_ty='D'))
+    #
+    #
+    # corp_code_list = db.getMajorShareholderReportingInfo(date)
+    # for corp_code in corp_code_list:
+    #     result = dart.get_majorstock(corp_code)
+    #     db.ResultMajorShareholderDataStore(result)
     date = "20201214"
-    db.ResultListDataStore(dart.get_list(bgn_de=date, pblntf_ty='D'))
-
-
-    corp_code_list = db.getMajorShareholderReportingInfo(date)
-    for corp_code in corp_code_list:
-        result = dart.get_majorstock(corp_code)
-        db.ResultMajorShareholderDataStore(result)
+    dart.get_freecapital_increasing_corp_info(date)
