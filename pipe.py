@@ -183,8 +183,8 @@ class Pipe:
 
     def get_majorshareholder_reporting(self, base_date):
         corp_code_list = db.getMajorShareholderReportingInfo(base_date)
-        for corp_code in corp_code_list.keys():
-            result = dart.get_majorstock(corp_code)
+        for corp in corp_code_list:
+            result = dart.get_majorstock(corp["corp_code"])
             db.ResultMajorShareholderDataStore(result)
 
     def get_freecapital_increasing_corp_info(self, base_date):
