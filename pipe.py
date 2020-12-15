@@ -183,19 +183,26 @@ class Pipe:
 
     def get_majorshareholder_reporting(self, base_date):
         corp_code_list = db.getMajorShareholderReportingInfo(base_date)
-        for corp_code in corp_code_list:
+        for corp_code in corp_code_list.keys():
             result = dart.get_majorstock(corp_code)
             db.ResultMajorShareholderDataStore(result)
 
     def get_freecapital_increasing_corp_info(self, base_date):
         corp_code_list = db.getFreeCapitalIncreaseEventReportingInfo(base_date)
-        for corp_code in corp_code_list:
+        for corp in corp_code_list:
+            # print(corp["corp_code"], corp["corp_name"])
             req_list = []
             for y in range(int(base_date[:4]), int(base_date[:4])-3, -1):
                 for key in self.reprt_ty_codes.keys():
                     req_list.append([y, self.reprt_ty_codes[key]])
             for bsns_year, reprt_code in req_list:
-                print(dart.get_fnlttSinglAcnt(corp_code, bsns_year, reprt_code))
+                print(corp["corp_code"], corp["corp_name"], bsns_year, reprt_code)
+                ret = dart.get_fnlttSinglAcnt(corp["corp_code"], bsns_year, reprt_code)
+                if "list" in ret.keys():
+                    for l in ret["list"]:
+                        print(l)
+                else:
+                    print(ret)
 
             # result = dart.get_fnlttSinglAcnt(corp_code, )
 
@@ -203,17 +210,8 @@ class Pipe:
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    # sec_code = '005930'
-    # print(aa.get_company_info(sec_code))
-    # print(aa.get_fnlttSinglAcnt(sec_code, "2020", aa.reprt_ty_codes["3분기보고서"]))
-    # db.ResultListDataStore(dart.get_list(bgn_de="20201214", pblntf_ty='B', pblntf_detail_ty="B001"))
-    # date = "20201214"
-    # db.ResultListDataStore(dart.get_list(bgn_de=date, pblntf_ty='D'))
-    #
-    #
-    # corp_code_list = db.getMajorShareholderReportingInfo(date)
-    # for corp_code in corp_code_list:
-    #     result = dart.get_majorstock(corp_code)
-    #     db.ResultMajorShareholderDataStore(result)
     date = "20201214"
+    # dart.get_shared_reporting(date)
+    # dart.get_majorshareholder_reporting(date)
+    # dart.get_majorevent_reporting(date)
     dart.get_freecapital_increasing_corp_info(date)
