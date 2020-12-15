@@ -187,22 +187,27 @@ class Pipe:
             result = dart.get_majorstock(corp["corp_code"])
             db.ResultMajorShareholderDataStore(result)
 
+    def get_document_xhml(self, rcp_no, cache=True):
+        return di.get_document_xhml(self.api_key, rcp_no, cache)
+
     def get_freecapital_increasing_corp_info(self, base_date):
         corp_code_list = db.getFreeCapitalIncreaseEventReportingInfo(base_date)
+        print(corp_code_list)
         for corp in corp_code_list:
-            # print(corp["corp_code"], corp["corp_name"])
-            req_list = []
-            for y in range(int(base_date[:4]), int(base_date[:4])-3, -1):
-                for key in self.reprt_ty_codes.keys():
-                    req_list.append([y, self.reprt_ty_codes[key]])
-            for bsns_year, reprt_code in req_list:
-                print(corp["corp_code"], corp["corp_name"], bsns_year, reprt_code)
-                ret = dart.get_fnlttSinglAcnt(corp["corp_code"], bsns_year, reprt_code)
-                if "list" in ret.keys():
-                    for l in ret["list"]:
-                        print(l)
-                else:
-                    print(ret)
+            print(corp["rcept_no"], corp["corp_code"], corp["corp_name"])
+            print(self.get_document_xhml(corp["rcept_no"]))
+            # req_list = []
+            # for y in range(int(base_date[:4]), int(base_date[:4])-3, -1):
+            #     for key in self.reprt_ty_codes.keys():
+            #         req_list.append([y, self.reprt_ty_codes[key]])
+            # for bsns_year, reprt_code in req_list:
+            #     print(corp["corp_code"], corp["corp_name"], bsns_year, reprt_code)
+            #     ret = dart.get_fnlttSinglAcnt(corp["corp_code"], bsns_year, reprt_code)
+            #     if "list" in ret.keys():
+            #         for l in ret["list"]:
+            #             print(l)
+            #     else:
+            #         print(ret)
 
             # result = dart.get_fnlttSinglAcnt(corp_code, )
 
@@ -210,7 +215,7 @@ class Pipe:
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    date = "20201214"
+    date = "20201215"
     # dart.get_shared_reporting(date)
     # dart.get_majorshareholder_reporting(date)
     # dart.get_majorevent_reporting(date)
