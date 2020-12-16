@@ -15,12 +15,13 @@ except ImportError:
 
 def getConfig():
     import configparser
-    global path, doc_path, apikey
+    global path, doc_path, apikey, yyyymmdd
     config = configparser.ConfigParser()
     config.read('config.ini')
     apikey = config['DART']['SEARCH-API-KEY']
     path = config['COMMON']['REPORT_PATH']
     doc_path = config['COMMON']['DOCUMENT_PATH']
+    yyyymmdd = str(datetime.now())[:10]
 
 
 def getKey():
@@ -107,16 +108,17 @@ def get_company_info_json(crtfc_key, corp_code=None):
     return list_data
 
 
-def get_document_xhml(api_key, rcp_no, corp_code, corp_name, cache=True):
+def get_document_xhml(api_key, rcp_no, corp_code, corp_name, dir_name, cache=True):
     # create cache directory if not exists
-    print("[OPENDART]공시서류원본파일 수집...")
+    # print("[OPENDART]공시서류원본파일 수집...")
     getConfig()
     # docs_cache_dir = 'docs_cache'
-    if not os.path.exists(doc_path):
-        os.makedirs(doc_path)
+    work_path = r'{}\{}\{}'.format(doc_path, dir_name, yyyymmdd)
+    if not os.path.exists(work_path):
+        os.makedirs(work_path)
 
     # read and return document if exists
-    fn = os.path.join(doc_path, 'dart-{}-{}-{}.xml'.format(rcp_no, corp_code, corp_name))
+    fn = os.path.join(work_path, 'dart-{}-{}-{}.xml'.format(rcp_no, corp_code, corp_name))
     if os.path.isfile(fn) and os.path.getsize(fn) > 0:
         with open(fn, 'rt') as f:
             return f.read()
