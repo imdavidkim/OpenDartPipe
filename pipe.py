@@ -187,15 +187,15 @@ class Pipe:
             result = dart.get_majorstock(corp["corp_code"])
             db.ResultMajorShareholderDataStore(result)
 
-    def get_document_xhml(self, rcp_no, cache=True):
-        return di.get_document_xhml(self.api_key, rcp_no, cache)
+    def get_document_xhml(self, rcp_no, corp_code, corp_name, cache=True):
+        return di.get_document_xhml(self.api_key, rcp_no, corp_code, corp_name, cache)
 
     def get_freecapital_increasing_corp_info(self, base_date):
         corp_code_list = db.getFreeCapitalIncreaseEventReportingInfo(base_date)
         print(corp_code_list)
         for corp in corp_code_list:
             print(corp["rcept_no"], corp["corp_code"], corp["corp_name"])
-            print(self.get_document_xhml(corp["rcept_no"]))
+            print(self.get_document_xhml(corp["rcept_no"], corp["corp_code"], corp["corp_name"]))
             # req_list = []
             # for y in range(int(base_date[:4]), int(base_date[:4])-3, -1):
             #     for key in self.reprt_ty_codes.keys():
@@ -215,8 +215,8 @@ class Pipe:
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    date = "20201215"
+    date = "20201216"
     # dart.get_shared_reporting(date)
     # dart.get_majorshareholder_reporting(date)
-    # dart.get_majorevent_reporting(date)
+    dart.get_majorevent_reporting(date)
     dart.get_freecapital_increasing_corp_info(date)
