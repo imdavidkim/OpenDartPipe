@@ -116,7 +116,7 @@ def get_document_xhml(api_key, rcp_no, corp_code, corp_name, cache=True):
         os.makedirs(doc_path)
 
     # read and return document if exists
-    fn = os.path.join(doc_path, 'dart-{}-{}-{}.xhml'.format(rcp_no, corp_code, corp_name))
+    fn = os.path.join(doc_path, 'dart-{}-{}-{}.xml'.format(rcp_no, corp_code, corp_name))
     if os.path.isfile(fn) and os.path.getsize(fn) > 0:
         with open(fn, 'rt') as f:
             return f.read()
@@ -139,7 +139,8 @@ def get_document_xhml(api_key, rcp_no, corp_code, corp_name, cache=True):
     zf = zipfile.ZipFile(io.BytesIO(r.content))
     info_list = zf.infolist()
     xml_data = zf.read(info_list[0].filename)
-    xml_text = xml_data.decode('euc-kr')
+    xml_text = xml_data.replace(b'encoding="utf-8"', b'encoding="euc-kr"').decode('euc-kr')
+    # xml_text = xml_data.decode('x-windows-949')
 
     # save document to cache
     with open(fn, 'wt') as f:
