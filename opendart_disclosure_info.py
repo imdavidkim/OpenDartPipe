@@ -107,7 +107,7 @@ def get_company_info_json(crtfc_key, corp_code=None):
     return list_data
 
 
-def get_document_xhml(api_key, rcp_no, cache=True):
+def get_document_xhml(api_key, rcp_no, corp_code, corp_name, cache=True):
     # create cache directory if not exists
     print("[OPENDART]공시서류원본파일 수집...")
     getConfig()
@@ -116,7 +116,7 @@ def get_document_xhml(api_key, rcp_no, cache=True):
         os.makedirs(doc_path)
 
     # read and return document if exists
-    fn = os.path.join(doc_path, 'dart-{}.xhml'.format(rcp_no))
+    fn = os.path.join(doc_path, 'dart-{}-{}-{}.xhml'.format(rcp_no, corp_code, corp_name))
     if os.path.isfile(fn) and os.path.getsize(fn) > 0:
         with open(fn, 'rt') as f:
             return f.read()
