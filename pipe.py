@@ -184,18 +184,42 @@ class Pipe:
     def get_majorshareholder_reporting(self, base_date):
         corp_code_list = db.getMajorShareholderReportingInfo(base_date)
         for corp in corp_code_list:
+            # self.get_document_xhml(corp["rcept_no"], corp["corp_code"], corp["corp_name"], "MajorShareHolder")
             result = dart.get_majorstock(corp["corp_code"])
-            db.ResultMajorShareholderDataStore(result)
+            currData = None
+            try:
 
-    def get_document_xhml(self, rcp_no, corp_code, corp_name, cache=True):
-        return di.get_document_xhml(self.api_key, rcp_no, corp_code, corp_name, cache)
+                for jsonData in result["list"]:
+                    currData = jsonData
+                    if jsonData["rcept_dt"].replace("-", "") >= base_date \
+                        and float(jsonData["stkrt"]) > 5.0 \
+                        and float(jsonData["stkrt_irds"]) > 0 \
+                        and ("1%" in jsonData["report_resn"]
+                             or "5%" in jsonData["report_resn"]
+                             or "신규" in jsonData["report_resn"]
+                             or "인수" in jsonData["report_resn"]
+                             or "매수" in jsonData["report_resn"]
+                            ):
+                        self.get_document_xhml(jsonData["rcept_no"], jsonData["corp_code"], jsonData["corp_name"], "MajorShareHolder")
+                        db.ResultMajorShareholderDataStore(jsonData)
+                    elif jsonData["rcept_dt"].replace("-", "") >= base_date \
+                        and float(jsonData["stkrt"]) > 5.0 \
+                        and float(jsonData["stkrt_irds"]) > 0:
+                        pass
+                        # print(jsonData)
+            except Exception as e:
+                print(e.__traceback__)
+                print(currData)
+
+    def get_document_xhml(self, rcp_no, corp_code, corp_name, dir_name, cache=True):
+        return di.get_document_xhml(self.api_key, rcp_no, corp_code, corp_name, dir_name, cache)
 
     def get_freecapital_increasing_corp_info(self, base_date):
         corp_code_list = db.getFreeCapitalIncreaseEventReportingInfo(base_date)
         print(corp_code_list)
         for corp in corp_code_list:
             print(corp["rcept_no"], corp["corp_code"], corp["corp_name"])
-            print(self.get_document_xhml(corp["rcept_no"], corp["corp_code"], corp["corp_name"]))
+            print(self.get_document_xhml(corp["rcept_no"], corp["corp_code"], corp["corp_name"], "FreeCapitalIncreasing"))
             # req_list = []
             # for y in range(int(base_date[:4]), int(base_date[:4])-3, -1):
             #     for key in self.reprt_ty_codes.keys():
@@ -216,7 +240,7 @@ if __name__ == "__main__":
     dart = Pipe()
     dart.create()
     date = "20201216"
-    # dart.get_shared_reporting(date)
-    # dart.get_majorshareholder_reporting(date)
-    dart.get_majorevent_reporting(date)
-    dart.get_freecapital_increasing_corp_info(date)
+    dart.get_shared_reporting(date)
+    dart.get_majorshareholder_reporting(date)
+    # dart.get_majorevent_reporting(date)
+    # dart.get_freecapital_increasing_corp_info(date)
