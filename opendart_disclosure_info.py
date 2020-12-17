@@ -118,7 +118,7 @@ def get_document_xhml(api_key, rcp_no, corp_code, corp_name, dir_name, cache=Tru
         os.makedirs(work_path)
 
     # read and return document if exists
-    fn = os.path.join(work_path, 'dart-{}-{}-{}.xml'.format(rcp_no, corp_code, corp_name))
+    fn = os.path.join(work_path, 'dart-{}-{}-{}.xml'.format(corp_code, corp_name, rcp_no))
     if os.path.isfile(fn) and os.path.getsize(fn) > 0:
         with open(fn, 'rt') as f:
             return f.read()
