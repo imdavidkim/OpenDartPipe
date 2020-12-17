@@ -4,6 +4,11 @@ import OpenDartPipe.opendart_company_info as ci
 import OpenDartPipe.opendart_bizreport_info as bi
 import OpenDartPipe.opendart_sharedstock_info as si
 import watson.db_factory as db
+import detective.fnguide_collector as fc
+from bs4 import BeautifulSoup
+import requests
+import json
+
 
 class Pipe:
     api_key = ""
@@ -211,36 +216,65 @@ class Pipe:
                 print(e.__traceback__)
                 print(currData)
 
-    def get_document_xhml(self, rcp_no, corp_code, corp_name, dir_name, cache=True):
-        return di.get_document_xhml(self.api_key, rcp_no, corp_code, corp_name, dir_name, cache)
+    def get_document_xhml(self, rcp_no, stock_code, corp_code, corp_name, dir_name, cache=True):
+        return di.get_document_xhml(self.api_key, rcp_no, stock_code, corp_code, corp_name, dir_name, cache)
 
     def get_freecapital_increasing_corp_info(self, base_date):
         corp_code_list = db.getFreeCapitalIncreaseEventReportingInfo(base_date)
         print(corp_code_list)
+        msg = {}
         for corp in corp_code_list:
             print(corp["rcept_no"], corp["corp_code"], corp["corp_name"])
-            print(self.get_document_xhml(corp["rcept_no"], corp["corp_code"], corp["corp_name"], "FreeCapitalIncreasing"))
-            # req_list = []
-            # for y in range(int(base_date[:4]), int(base_date[:4])-3, -1):
-            #     for key in self.reprt_ty_codes.keys():
-            #         req_list.append([y, self.reprt_ty_codes[key]])
-            # for bsns_year, reprt_code in req_list:
-            #     print(corp["corp_code"], corp["corp_name"], bsns_year, reprt_code)
-            #     ret = dart.get_fnlttSinglAcnt(corp["corp_code"], bsns_year, reprt_code)
-            #     if "list" in ret.keys():
-            #         for l in ret["list"]:
-            #             print(l)
-            #     else:
-            #         print(ret)
+            msg[corp["corp_name"]] = {"corp_code": corp["corp_code"], "stock_code": corp["stock_code"], "url": "http://dart.fss.or.kr/dsaf001/main.do?rcpNo={}".format(corp["rcept_no"])}
+            soup = BeautifulSoup(self.get_document_xhml(corp["rcept_no"], corp["stock_code"], corp["corp_code"], corp["corp_name"], "FreeCapitalIncreasing"), 'lxml')
+
+            # 신주의 배당기산일
+            DV_ST_DT = soup.find_all('tu', {'aunit': "DV_ST_DT"})
+            if isinstance(DV_ST_DT, list) and len(DV_ST_DT) > 0:
+                msg[corp["corp_name"]]["신주의 배당기산일"] = DV_ST_DT[0].text
+            else:
+                pass
+            # 신주의 상장 예정일
+            LST_PLN_DT = soup.find_all('tu', {'aunit': "LST_PLN_DT"})
+            if isinstance(LST_PLN_DT, list) and len(LST_PLN_DT) > 0:
+                msg[corp["corp_name"]]["신주의 상장 예정일"] = LST_PLN_DT[0].text
+            else:
+                pass
+            # 1주당 신주배정 주식수
+            NEW_ASN_CST = soup.find_all('te', {'acode': "NEW_ASN_CST"})
+            if isinstance(NEW_ASN_CST, list) and len(NEW_ASN_CST) > 0:
+                msg[corp["corp_name"]]["1주당 신주배정 주식수"] = NEW_ASN_CST[0].text
+            else:
+                pass
+            call = json.loads(requests.get("https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(corp["stock_code"])).content.decode("utf-8"))
+            msg[corp["corp_name"]]["시가총액"] = f'{call["marketSum"]*1000000:,}'
+            msg[corp["corp_name"]]["PER"] = call["per"]
+            msg[corp["corp_name"]]["EPS"] = call["eps"]
+            msg[corp["corp_name"]]["PBR"] = call["pbr"]
+            msg[corp["corp_name"]]["현재가"] = f'{call["now"]:,}'
+
+            req_list = []
+            for y in range(int(base_date[:4]), int(base_date[:4])-3, -1):
+                for key in self.reprt_ty_codes.keys():
+                    req_list.append([y, self.reprt_ty_codes[key]])
+            for bsns_year, reprt_code in req_list:
+                print(corp["corp_code"], corp["corp_name"], bsns_year, reprt_code)
+                ret = dart.get_fnlttSinglAcnt(corp["corp_code"], bsns_year, reprt_code)
+                if "list" in ret.keys():
+                    for l in ret["list"]:
+                        print(l)
+                else:
+                    print(ret)
 
             # result = dart.get_fnlttSinglAcnt(corp_code, )
-
+        for m in msg:
+            print(m, msg[m])
 
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    date = "20201216"
-    dart.get_shared_reporting(date)
-    dart.get_majorshareholder_reporting(date)
-    # dart.get_majorevent_reporting(date)
-    # dart.get_freecapital_increasing_corp_info(date)
+    date = "20201217"
+    # dart.get_shared_reporting(date)
+    # dart.get_majorshareholder_reporting(date)
+    dart.get_majorevent_reporting(date)
+    dart.get_freecapital_increasing_corp_info(date)
