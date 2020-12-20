@@ -241,7 +241,7 @@ class Pipe:
         msg = {}
         for corp in corp_code_list:
             print(corp["rcept_no"], corp["corp_code"], corp["corp_name"])
-            msg[corp["corp_name"]] = {"corp_code": corp["corp_code"], "stock_code": corp["stock_code"], "url": "http://dart.fss.or.kr/dsaf001/main.do?rcpNo={}".format(corp["rcept_no"])}
+            msg[corp["corp_name"]] = {"rcept_no": corp["rcept_no"], "corp_code": corp["corp_code"], "stock_code": corp["stock_code"], "url": "http://dart.fss.or.kr/dsaf001/main.do?rcpNo={}".format(corp["rcept_no"])}
             soup = BeautifulSoup(self.get_document_xhml(corp["rcept_no"], corp["stock_code"], corp["corp_code"], corp["corp_name"], "FreeCapitalIncreasing"), 'lxml')
 
             # 신주배정기준일
@@ -300,6 +300,7 @@ class Pipe:
         txt = ""
         for idx, m in enumerate(msg):
             # print(m, msg[m])
+            txt += "{} 무상증자공시정보\n".format(msg[m]["rcept_no"][:8])
             txt += "<b>{}</b> [<a href='{}'>공시문서열기</a>]\n".format(m, msg[m]["url"])
             for key in msg[m].keys():
                 if key in ['corp_code', 'stock_code', 'url']:
