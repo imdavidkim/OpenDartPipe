@@ -6,6 +6,7 @@ import OpenDartPipe.opendart_sharedstock_info as si
 import watson.db_factory as db
 import detective.fnguide_collector as fc
 import detective.messenger as messenger
+import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 import json
@@ -311,12 +312,57 @@ class Pipe:
                     txt += "- {} : {}\n".format(key, msg[m][key])
             messenger.free_cap_inc_message_to_telegram(txt)
             txt = ""
+    def get_req_lists(self, lists):
+        req_list = []
+        biz_report_index = None
+        yyyymm = None
+        for idx, l in enumerate(lists):
+            if "사업" in l["report_nm"]:
+                biz_report_index = idx
+                yyyymm = pd.to_datetime(l["report_nm"].split("(")[-1].replace(")", ""))
+                print(yyyymm, biz_report_index)
+            elif "반기" in l["report_nm"]:
+                biz_report_index = idx
+                yyyymm = pd.to_datetime(l["report_nm"].split("(")[-1].replace(")", ""))
+                print(yyyymm, biz_report_index)
 
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    date = "20201217"
-    dart.get_shared_reporting(date)
-    dart.get_majorshareholder_reporting(date)
-    # dart.get_majorevent_reporting(date)
-    # dart.get_freecapital_increasing_corp_info(date)
+    # date = "20201217"
+    # dart.get_shared_reporting(date)
+    # dart.get_majorshareholder_reporting(date)
+    # # dart.get_majorevent_reporting(date)
+    # # dart.get_freecapital_increasing_corp_info(date)
+    ret, code = dart.get_corp_code('050860')
+    # ret, code = dart.get_corp_code('326030')
+    if ret:
+        info = dart.get_list(corp_code=code, bgn_de='20171221', pblntf_ty='A')
+        dart.get_req_lists(info['list'][:4])
+        # for i in info['list'][:4]:
+        #     print(i)
+        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11013')
+        # for r in ret['list']:
+        #     print(r)
+        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11011')
+        # for r in ret['list']:
+        #     print(r)
+        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11014')
+        # for r in ret['list']:
+        #     print(r)
+        # ret = dart.get_fnlttSinglAcnt(code, '2019', '11012')
+        # for r in ret['list']:
+        #     print(r)
+
+        # ret = dart.get_fnlttSinglAcnt(code, '2019', '11011')
+        # for r in ret['list']:
+        #     print(r)
+        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11013')
+        # for r in ret['list']:
+        #     print(r)
+        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11012')
+        # for r in ret['list']:
+        #     print(r)
+        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11014')
+        # for r in ret['list']:
+        #     print(r)
