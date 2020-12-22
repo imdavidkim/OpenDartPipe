@@ -102,18 +102,18 @@ class Pipe:
 
     # 2020 스케쥴표
     reporting_schedules = {
-        "01": {"1분기보고서": "0615|0629", "반기보고서": "0914|0929", "3분기보고서": "1215|1230", "사업보고서": "0504"},
-        "02": {"1분기보고서": "0715|0730", "반기보고서": "1015|1030", "3분기보고서": "0114|0129", "사업보고서": "0529"},
-        "03": {"1분기보고서": "0814|0831", "반기보고서": "1116|1130", "3분기보고서": "0214|0302", "사업보고서": "0629"},
-        "04": {"1분기보고서": "0914|0929", "반기보고서": "1215|1230", "3분기보고서": "0316|0331", "사업보고서": "0729"},
-        "05": {"1분기보고서": "1015|1030", "반기보고서": "0114|0129", "3분기보고서": "0414|0429", "사업보고서": "0831"},
-        "06": {"1분기보고서": "1116|1130", "반기보고서": "0214|0302", "3분기보고서": "0515|0601", "사업보고서": "0928"},
-        "07": {"1분기보고서": "1215|1230", "반기보고서": "0316|0331", "3분기보고서": "0615|0629", "사업보고서": "1029"},
-        "08": {"1분기보고서": "0114|0129", "반기보고서": "0414|0429", "3분기보고서": "0715|0730", "사업보고서": "1130"},
-        "09": {"1분기보고서": "0214|0302", "반기보고서": "0515|0601", "3분기보고서": "0814|0831", "사업보고서": "1229"},
-        "10": {"1분기보고서": "0316|0331", "반기보고서": "0615|0629", "3분기보고서": "0914|0929", "사업보고서": "0129"},
-        "11": {"1분기보고서": "0414|0429", "반기보고서": "0715|0730", "3분기보고서": "1015|1030", "사업보고서": "0228"},
-        "12": {"1분기보고서": "0515|0601", "반기보고서": "0814|0831", "3분기보고서": "1116|1130", "사업보고서": "0330"}
+        "01": {"1분기보고서": "04", "반기보고서": "07", "3분기보고서": "10", "사업보고서": "01"},
+        "02": {"1분기보고서": "05", "반기보고서": "08", "3분기보고서": "11", "사업보고서": "02"},
+        "03": {"1분기보고서": "06", "반기보고서": "09", "3분기보고서": "12", "사업보고서": "03"},
+        "04": {"1분기보고서": "07", "반기보고서": "10", "3분기보고서": "01", "사업보고서": "04"},
+        "05": {"1분기보고서": "08", "반기보고서": "11", "3분기보고서": "02", "사업보고서": "05"},
+        "06": {"1분기보고서": "09", "반기보고서": "12", "3분기보고서": "03", "사업보고서": "06"},
+        "07": {"1분기보고서": "10", "반기보고서": "01", "3분기보고서": "04", "사업보고서": "07"},
+        "08": {"1분기보고서": "11", "반기보고서": "02", "3분기보고서": "05", "사업보고서": "08"},
+        "09": {"1분기보고서": "12", "반기보고서": "03", "3분기보고서": "06", "사업보고서": "09"},
+        "10": {"1분기보고서": "01", "반기보고서": "04", "3분기보고서": "07", "사업보고서": "10"},
+        "11": {"1분기보고서": "02", "반기보고서": "05", "3분기보고서": "08", "사업보고서": "11"},
+        "12": {"1분기보고서": "03", "반기보고서": "06", "3분기보고서": "09", "사업보고서": "12"}
 
     }
 
@@ -312,8 +312,7 @@ class Pipe:
                     txt += "- {} : {}\n".format(key, msg[m][key])
             messenger.free_cap_inc_message_to_telegram(txt)
             txt = ""
-            
-            
+
     def get_req_lists(self, lists):
         req_list = []
         if len(lists) > 0:
@@ -323,14 +322,22 @@ class Pipe:
             if len(res) == 0:
                 res = list(filter(lambda l: "반기" in l['report_nm'], lists))
                 if len(res) == 0:
-                    pass
-                    # comp_info = self.get_company_info(lists[0]["corp_code"])
-
+                    res = list(filter(lambda l: "분기" in l['report_nm'], lists))
+                    if len(res) == 1:
+                        mm = res[0]['report_nm'].split(".")[1][:2]
+                        for key in self.reporting_schedules[comp_info["acc_mt"]].keys():
+                            if mm == self.reporting_schedules[comp_info["acc_mt"]][key]:
+                                reprt_ty_code = self.reprt_ty_codes[key]
+                    else:
+                        print("[Check]error 상황")
+                else:
+                    reprt_ty_code = self.reprt_ty_codes["반기보고서"]
             else:
                 reprt_ty_code = self.reprt_ty_codes["사업보고서"]
-            print(res, lists.index(res[0]) if len(res) > 0 else None)
+            print(res, lists.index(res[0]) if len(res) > 0 else None, reprt_ty_code)
         else:
             return None
+
 
 if __name__ == "__main__":
     dart = Pipe()
@@ -340,38 +347,9 @@ if __name__ == "__main__":
     # # dart.get_majorshareholder_reporting(date)
     # dart.get_majorevent_reporting(date)
     # dart.get_freecapital_increasing_corp_info(date)
-    ret, code = dart.get_corp_code('005930')
+    # ret, code = dart.get_corp_code('005930')
+    ret, code = dart.get_corp_code('326030')
     # print(ret, code)
-    lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
-    # print(lists)
+    lists = dart.get_list(corp_code=code, bgn_de='20201101', pblntf_ty='A')["list"][:4]
+    print(lists)
     dart.get_req_lists(lists)
-    if ret:
-        info = dart.get_list(corp_code=code, bgn_de='20171221', pblntf_ty='A')
-        dart.get_req_lists(info['list'][:4])
-        # for i in info['list'][:4]:
-        #     print(i)
-        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11013')
-        # for r in ret['list']:
-        #     print(r)
-        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11011')
-        # for r in ret['list']:
-        #     print(r)
-        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11014')
-        # for r in ret['list']:
-        #     print(r)
-        # ret = dart.get_fnlttSinglAcnt(code, '2019', '11012')
-        # for r in ret['list']:
-        #     print(r)
-
-        # ret = dart.get_fnlttSinglAcnt(code, '2019', '11011')
-        # for r in ret['list']:
-        #     print(r)
-        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11013')
-        # for r in ret['list']:
-        #     print(r)
-        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11012')
-        # for r in ret['list']:
-        #     print(r)
-        # ret = dart.get_fnlttSinglAcnt(code, '2020', '11014')
-        # for r in ret['list']:
-        #     print(r)
