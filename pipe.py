@@ -312,30 +312,39 @@ class Pipe:
                     txt += "- {} : {}\n".format(key, msg[m][key])
             messenger.free_cap_inc_message_to_telegram(txt)
             txt = ""
+            
+            
     def get_req_lists(self, lists):
         req_list = []
-        biz_report_index = None
-        yyyymm = None
-        for idx, l in enumerate(lists):
-            if "사업" in l["report_nm"]:
-                biz_report_index = idx
-                yyyymm = pd.to_datetime(l["report_nm"].split("(")[-1].replace(")", ""))
-                print(yyyymm, biz_report_index)
-            elif "반기" in l["report_nm"]:
-                biz_report_index = idx
-                yyyymm = pd.to_datetime(l["report_nm"].split("(")[-1].replace(")", ""))
-                print(yyyymm, biz_report_index)
+        if len(lists) > 0:
+            comp_info = self.get_company_info(lists[0]["corp_code"])
+            print(comp_info)
+            res = list(filter(lambda l: "사업" in l['report_nm'], lists))
+            if len(res) == 0:
+                res = list(filter(lambda l: "반기" in l['report_nm'], lists))
+                if len(res) == 0:
+                    pass
+                    # comp_info = self.get_company_info(lists[0]["corp_code"])
+
+            else:
+                reprt_ty_code = self.reprt_ty_codes["사업보고서"]
+            print(res, lists.index(res[0]) if len(res) > 0 else None)
+        else:
+            return None
 
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    # date = "20201217"
-    # dart.get_shared_reporting(date)
-    # dart.get_majorshareholder_reporting(date)
-    # # dart.get_majorevent_reporting(date)
-    # # dart.get_freecapital_increasing_corp_info(date)
-    ret, code = dart.get_corp_code('050860')
-    # ret, code = dart.get_corp_code('326030')
+    # date = "20201221"
+    # # dart.get_shared_reporting(date)
+    # # dart.get_majorshareholder_reporting(date)
+    # dart.get_majorevent_reporting(date)
+    # dart.get_freecapital_increasing_corp_info(date)
+    ret, code = dart.get_corp_code('005930')
+    # print(ret, code)
+    lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
+    # print(lists)
+    dart.get_req_lists(lists)
     if ret:
         info = dart.get_list(corp_code=code, bgn_de='20171221', pblntf_ty='A')
         dart.get_req_lists(info['list'][:4])
