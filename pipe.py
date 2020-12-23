@@ -315,6 +315,8 @@ class Pipe:
 
     def get_req_lists(self, lists):
         req_list = []
+        base_idx = None
+        base_year = None
         if len(lists) > 0:
             comp_info = self.get_company_info(lists[0]["corp_code"])
             print(comp_info)
@@ -325,16 +327,27 @@ class Pipe:
                     res = list(filter(lambda l: "분기" in l['report_nm'], lists))
                     if len(res) == 1:
                         mm = res[0]['report_nm'].split(".")[1][:2]
+                        base_idx = lists.index(res[0])
+                        base_year = res[0]['report_nm'].split(".")[0][-4:]
                         for key in self.reporting_schedules[comp_info["acc_mt"]].keys():
                             if mm == self.reporting_schedules[comp_info["acc_mt"]][key]:
                                 reprt_ty_code = self.reprt_ty_codes[key]
                     else:
                         print("[Check]error 상황")
                 else:
+                    base_idx = lists.index(res[0])
+                    base_year = res[0]['report_nm'].split(".")[0][-4:]
                     reprt_ty_code = self.reprt_ty_codes["반기보고서"]
             else:
+                base_idx = lists.index(res[0])
+                base_year = res[0]['report_nm'].split(".")[0][-4:]
                 reprt_ty_code = self.reprt_ty_codes["사업보고서"]
-            print(res, lists.index(res[0]) if len(res) > 0 else None, reprt_ty_code)
+            # print(res, lists.index(res[0]) if len(res) > 0 else None, reprt_ty_code)
+            req_list.append([base_year, reprt_ty_code])
+            if base_idx is not None:
+                for idx, l in enumerate(lists):
+                    if idx == base_idx: continue
+                    if idx == base_idx - 1: reprt_ty_code =
         else:
             return None
 
@@ -347,9 +360,9 @@ if __name__ == "__main__":
     # # dart.get_majorshareholder_reporting(date)
     # dart.get_majorevent_reporting(date)
     # dart.get_freecapital_increasing_corp_info(date)
-    # ret, code = dart.get_corp_code('005930')
-    ret, code = dart.get_corp_code('326030')
+    ret, code = dart.get_corp_code('005930')
+    # ret, code = dart.get_corp_code('326030')
     # print(ret, code)
-    lists = dart.get_list(corp_code=code, bgn_de='20201101', pblntf_ty='A')["list"][:4]
+    lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
     print(lists)
     dart.get_req_lists(lists)
