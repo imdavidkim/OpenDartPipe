@@ -321,36 +321,47 @@ class Pipe:
             comp_info = self.get_company_info(lists[0]["corp_code"])
             print(comp_info)
             res = list(filter(lambda l: "사업" in l['report_nm'], lists))
-            if len(res) == 0:
-                res = list(filter(lambda l: "반기" in l['report_nm'], lists))
-                if len(res) == 0:
-                    res = list(filter(lambda l: "분기" in l['report_nm'], lists))
-                    if len(res) == 1:
-                        mm = res[0]['report_nm'].split(".")[1][:2]
-                        base_idx = lists.index(res[0])
-                        base_year = res[0]['report_nm'].split(".")[0][-4:]
-                        for key in self.reporting_schedules[comp_info["acc_mt"]].keys():
-                            if mm == self.reporting_schedules[comp_info["acc_mt"]][key]:
-                                reprt_ty_code = self.reprt_ty_codes[key]
-                    else:
-                        print("[Check]error 상황")
-                else:
-                    base_idx = lists.index(res[0])
-                    base_year = res[0]['report_nm'].split(".")[0][-4:]
-                    reprt_ty_code = self.reprt_ty_codes["반기보고서"]
-            else:
+            if len(res) > 0:
                 base_idx = lists.index(res[0])
                 base_year = res[0]['report_nm'].split(".")[0][-4:]
-                reprt_ty_code = self.reprt_ty_codes["사업보고서"]
+                reprt_type = "사업보고서"
+                reprt_ty_code = self.reprt_ty_codes[reprt_type]
+                req_list.append([base_year, reprt_ty_code])
+            res = list(filter(lambda l: "반기" in l['report_nm'], lists))
+            if len(res) > 0:
+                base_idx = lists.index(res[0])
+                base_year = res[0]['report_nm'].split(".")[0][-4:]
+                reprt_type = "반기보고서"
+                reprt_ty_code = self.reprt_ty_codes[reprt_type]
+                req_list.append([base_year, reprt_ty_code])
             # print(res, lists.index(res[0]) if len(res) > 0 else None, reprt_ty_code)
-            req_list.append([base_year, reprt_ty_code])
-            if base_idx is not None:
-                for idx, l in enumerate(lists):
-                    if idx == base_idx: continue
-                    if idx == base_idx - 1: reprt_ty_code =
+            res = list(filter(lambda l: "분기" in l['report_nm'], lists))
+            if len(res) > 0:
+                for r in res:
+                    mm = r['report_nm'].split(".")[1][:2]
+                    base_idx = lists.index(r)
+                    base_year = r['report_nm'].split(".")[0][-4:]
+                    for key in self.reporting_schedules[comp_info["acc_mt"]].keys():
+                        if mm == self.reporting_schedules[comp_info["acc_mt"]][key]:
+                            reprt_ty_code = self.reprt_ty_codes[key]
+                            req_list.append([base_year, reprt_ty_code])
+                            break
+            return req_list
+            # if base_idx is not None:
+            #     for idx, l in enumerate(lists):
+            #         if idx == base_idx: continue
+            #         if idx == base_idx - 1: reprt_ty_code =
         else:
             return None
 
+    def get_fnlttSinglAcnt_from_req_list(self, corp_code, req_list):
+        for bsns_year, reprt_code in req_list:
+            ret = dart.get_fnlttSinglAcnt(corp_code, bsns_year, reprt_code)
+            if "list" in ret.keys():
+                for l in ret["list"]:
+                    print(l)
+            else:
+                print(ret)
 
 if __name__ == "__main__":
     dart = Pipe()
@@ -360,9 +371,12 @@ if __name__ == "__main__":
     # # dart.get_majorshareholder_reporting(date)
     # dart.get_majorevent_reporting(date)
     # dart.get_freecapital_increasing_corp_info(date)
-    ret, code = dart.get_corp_code('005930')
-    # ret, code = dart.get_corp_code('326030')
+    # ret, code = dart.get_corp_code('005930')
+    ret, code = dart.get_corp_code('326030')
     # print(ret, code)
     lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
-    print(lists)
-    dart.get_req_lists(lists)
+    for l in lists:
+        print(l)
+    # print(lists)
+    req_list = dart.get_req_lists(lists)
+    dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
