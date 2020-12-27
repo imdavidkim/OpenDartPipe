@@ -241,6 +241,7 @@ class Pipe:
         print(corp_code_list)
         msg = {}
         for corp in corp_code_list:
+            if corp["stock_code"] == "": continue
             print(corp["rcept_no"], corp["corp_code"], corp["corp_name"])
             msg[corp["corp_name"]] = {"rcept_no": corp["rcept_no"], "corp_code": corp["corp_code"], "stock_code": corp["stock_code"], "url": "http://dart.fss.or.kr/dsaf001/main.do?rcpNo={}".format(corp["rcept_no"])}
             soup = BeautifulSoup(self.get_document_xhml(corp["rcept_no"], corp["stock_code"], corp["corp_code"], corp["corp_name"], "FreeCapitalIncreasing"), 'lxml')
