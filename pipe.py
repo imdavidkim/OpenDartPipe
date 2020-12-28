@@ -356,11 +356,21 @@ class Pipe:
             return None
 
     def get_fnlttSinglAcnt_from_req_list(self, corp_code, req_list):
+        retDict = {}
         for bsns_year, reprt_code in req_list:
-            ret = dart.get_fnlttSinglAcnt(corp_code, bsns_year, reprt_code)
+            ret = self.get_fnlttSinglAcnt(corp_code, bsns_year, reprt_code)
             if "list" in ret.keys():
                 for l in ret["list"]:
                     print(l)
+                    if l["fs_nm"] in retDict.keys(): pass
+                    else: retDict[l["fs_nm"]] = {}
+                    if l["sj_nm"] in retDict[l["fs_nm"]].keys(): pass
+                    else: retDict[l["fs_nm"]][l["sj_nm"]] = {}
+                    if l["account_nm"] in retDict[l["fs_nm"]][l["sj_nm"]].keys(): pass
+                    else: retDict[l["fs_nm"]][l["fs_nm"]][l["account_nm"]] = {}
+
+                    retDict[l["fs_nm"]][l["fs_nm"]][l["account_nm"]] = {l["thstrm_dt"]: l["thstrm_amount"], l["frmtrm_dt"]: l["frmtrm_amount"]}
+                    if "frmtrm_add_amount" in l.keys(): 
             else:
                 print(ret)
 
