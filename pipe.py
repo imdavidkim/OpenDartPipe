@@ -419,21 +419,24 @@ class Pipe:
 
         # print(retDict)
         return retDict
+    
+    
 
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    # date = "20201221"
-    # # dart.get_shared_reporting(date)
-    # # dart.get_majorshareholder_reporting(date)
-    # dart.get_majorevent_reporting(date)
-    # dart.get_freecapital_increasing_corp_info(date)
+    date = "20201228"
+    # dart.get_shared_reporting(date)
+    # dart.get_majorshareholder_reporting(date)
+    dart.get_majorevent_reporting(date)
+    dart.get_freecapital_increasing_corp_info(date)
+
     # ret, code = dart.get_corp_code('005930')
-    ret, code = dart.get_corp_code('326030')
-    # print(ret, code)
-    lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
-    for l in lists:
-        print(l)
-    # print(lists)
-    req_list = dart.get_req_lists(lists)
-    dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
+    # ret, code = dart.get_corp_code('326030')
+    # # print(ret, code)
+    # lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
+    # for l in lists:
+    #     print(l)
+    # # print(lists)
+    # req_list = dart.get_req_lists(lists)
+    # dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
