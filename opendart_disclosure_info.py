@@ -81,20 +81,23 @@ def get_list_json(crtfc_key, corp_code=None, bgn_de=None, end_de=None, last_repr
     res = requests.get(url, params=params)
     list_data = json.loads(res.content)
     retJson = list_data
-    if list_data["total_page"] != list_data["page_no"]:
-        cur_page = list_data["page_no"] + 1
-        tot_page = list_data["total_page"]
-        retJson = list_data
-        for page in range(cur_page, tot_page+1):
-            params["page_no"] = page
-            res = requests.get(url, params=params)
-            list_data = json.loads(res.content)
-            retJson["list"].extend(list_data["list"])
-        # print(retJson["total_count"], len(retJson["list"]))
-    retJson.pop("page_no", None)
-    retJson.pop("page_count", None)
-    retJson.pop("total_page", None)
-    return retJson
+    if list_data['status'] == '013':
+        return None
+    else:
+        if list_data["total_page"] != list_data["page_no"]:
+            cur_page = list_data["page_no"] + 1
+            tot_page = list_data["total_page"]
+            retJson = list_data
+            for page in range(cur_page, tot_page+1):
+                params["page_no"] = page
+                res = requests.get(url, params=params)
+                list_data = json.loads(res.content)
+                retJson["list"].extend(list_data["list"])
+            # print(retJson["total_count"], len(retJson["list"]))
+        if "page_no" in retJson.keys(): retJson.pop("page_no", None)
+        if "page_count" in retJson.keys(): retJson.pop("page_count", None)
+        if "total_page" in retJson.keys(): retJson.pop("total_page", None)
+        return retJson
 
 
 def get_company_info_json(crtfc_key, corp_code=None):
