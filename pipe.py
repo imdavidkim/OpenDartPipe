@@ -143,22 +143,19 @@ class Pipe:
             else:
                 return False, None
 
-    def get_list(self, corp_code=None, bgn_de=None, end_de=None, last_reprt_at="Y", pblntf_ty=None, 
-                 pblntf_detail_ty=None, corp_cls=None):
+    def get_list(self, corp_code=None, bgn_de=None, end_de=None, last_reprt_at="Y", pblntf_ty=None, pblntf_detail_ty=None, corp_cls=None):
         if corp_code:
             ret, code = self.get_corp_code(corp_code)
         else:
             ret = True
             code = None
         if ret:
-            return di.get_list_json(self.api_key, code, bgn_de, end_de, last_reprt_at, pblntf_ty, pblntf_detail_ty, 
-                                    corp_cls)
+            return di.get_list_json(self.api_key, code, bgn_de, end_de, last_reprt_at, pblntf_ty, pblntf_detail_ty, corp_cls)
 
     def get_company_info(self, corp_code):
         ret, code = self.get_corp_code(corp_code)
         if ret:
             return di.get_company_info_json(self.api_key, code)
-        
     # -- Opendart : 공시정보 끝
 
     # -- Opendart : 상장기업 재무정보
@@ -189,8 +186,7 @@ class Pipe:
         db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["지분공시"]))
 
     def get_majorevent_reporting(self, base_date):
-        db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"], 
-                                             pblntf_detail_ty=self.pblntf_detail_ty_codes["주요사항보고서"]))
+        db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"], pblntf_detail_ty=self.pblntf_detail_ty_codes["주요사항보고서"]))
 
     def get_majorshareholder_reporting(self, base_date):
         corp_code_list = db.getMajorShareholderReportingInfo(base_date)
@@ -215,9 +211,7 @@ class Pipe:
                         msg[corp["corp_name"]] = {"corp_code": corp["corp_code"], "stock_code": corp["stock_code"],
                                                   "url": "http://dart.fss.or.kr/dsaf001/main.do?rcpNo={}".format(
                                                       corp["rcept_no"])}
-                        soup = BeautifulSoup(
-                            self.get_document_xhml(jsonData["rcept_no"], corp["stock_code"], jsonData["corp_code"], 
-                                                   jsonData["corp_name"], "MajorShareHolder"), 'lxml')
+                        soup = BeautifulSoup(self.get_document_xhml(jsonData["rcept_no"], corp["stock_code"], jsonData["corp_code"], jsonData["corp_name"], "MajorShareHolder"), 'lxml')
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
                                 corp["stock_code"])).content.decode("utf-8"))
@@ -249,12 +243,8 @@ class Pipe:
         for corp in corp_code_list:
             if corp["stock_code"] == "": continue
             print(corp["rcept_no"], corp["corp_code"], corp["corp_name"])
-            msg[corp["corp_name"]] = {"rcept_no": corp["rcept_no"], "corp_code": corp["corp_code"], 
-                                      "stock_code": corp["stock_code"], 
-                                      "url": "http://dart.fss.or.kr/dsaf001/main.do?rcpNo={}".format(corp["rcept_no"])}
-            soup = BeautifulSoup(
-                self.get_document_xhml(corp["rcept_no"], corp["stock_code"], corp["corp_code"], corp["corp_name"], 
-                                       "FreeCapitalIncreasing"), 'lxml')
+            msg[corp["corp_name"]] = {"rcept_no": corp["rcept_no"], "corp_code": corp["corp_code"], "stock_code": corp["stock_code"], "url": "http://dart.fss.or.kr/dsaf001/main.do?rcpNo={}".format(corp["rcept_no"])}
+            soup = BeautifulSoup(self.get_document_xhml(corp["rcept_no"], corp["stock_code"], corp["corp_code"], corp["corp_name"], "FreeCapitalIncreasing"), 'lxml')
 
             # 신주배정기준일
             ALL_BS_DT = soup.find_all('tu', {'aunit': "ALL_BS_DT"})
@@ -288,8 +278,7 @@ class Pipe:
                         msg[corp["corp_name"]]["신주정보"] = RESOURCE.text.replace("&cr;", "\n").replace("\n\n", "\n")
             else:
                 pass
-            call = json.loads(requests.get("https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
-                corp["stock_code"])).content.decode("utf-8"))
+            call = json.loads(requests.get("https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(corp["stock_code"])).content.decode("utf-8"))
             msg[corp["corp_name"]]["시가총액"] = f'{call["marketSum"]*1000000:,}'
             msg[corp["corp_name"]]["PER"] = call["per"]
             msg[corp["corp_name"]]["EPS"] = call["eps"]
@@ -368,6 +357,7 @@ class Pipe:
 
     def get_fnlttSinglAcnt_from_req_list(self, corp_code, req_list):
         retDict = {}
+        ret = None
         yyyy_report_nm = None
         for bsns_year, reprt_code in req_list:
             if reprt_code == "11011":
@@ -378,76 +368,102 @@ class Pipe:
                 yyyy_report_nm = "{} 1/4".format(bsns_year)
             elif reprt_code == "11014":
                 yyyy_report_nm = "{} 3/4".format(bsns_year)
+            try:
+                ret = self.get_fnlttSinglAcnt(corp_code, bsns_year, reprt_code)
+                # print(ret)
+                if "list" in ret.keys():
+                    for l in ret["list"]:
+                        # print(l)
+                        if l["fs_nm"] not in retDict.keys():
+                            retDict[l["fs_nm"]] = {}
+                        # print(retDict)
+                        if l["sj_nm"] not in retDict[l["fs_nm"]].keys():
+                            retDict[l["fs_nm"]][l["sj_nm"]] = {}
+                        # print(retDict)
+                        if l["account_nm"] not in retDict[l["fs_nm"]][l["sj_nm"]].keys():
+                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]] = {}
+                        # print(retDict)
+                        if l["sj_nm"] == "재무상태표":
+                            if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm] = {}
+                            if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm] = {}
+                            if reprt_code == "11011" and l["fs_div"] == "CFS":
+                                if "bfefrmtrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][
+                                        l["bfefrmtrm_dt"]] = l["bfefrmtrm_amount"] if l[
+                                                                                          "bfefrmtrm_amount"] != "-" else "0"
+                                if "frmtrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][l["frmtrm_dt"]] = \
+                                    l["frmtrm_amount"] if l["frmtrm_amount"] != "-" else "0"
+                                if "thstrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][l["thstrm_dt"]] = \
+                                    l["thstrm_amount"] if l["thstrm_amount"] != "-" else "0"
+                            else:
+                                if "frmtrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][l["frmtrm_dt"]] = \
+                                    l["frmtrm_amount"] if l["frmtrm_amount"] != "-" else "0"
+                                if "thstrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][l["thstrm_dt"]] = \
+                                    l["thstrm_amount"] if l["thstrm_amount"] != "-" else "0"
 
-            ret = self.get_fnlttSinglAcnt(corp_code, bsns_year, reprt_code)
-            if "list" in ret.keys():
-                for l in ret["list"]:
-                    # print(l)
-                    if l["fs_nm"] not in retDict.keys():
-                        retDict[l["fs_nm"]] = {}
-                    # print(retDict)
-                    if l["sj_nm"] not in retDict[l["fs_nm"]].keys():
-                        retDict[l["fs_nm"]][l["sj_nm"]] = {}
-                    # print(retDict)
-                    if l["account_nm"] not in retDict[l["fs_nm"]][l["sj_nm"]].keys():
-                        retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]] = {}
-                    # print(retDict)
-                    if l["sj_nm"] == "재무상태표":
-                        if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm] = []
-                        if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm] = []
-                        if reprt_code == "11011":
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm].extend([
-                                {l["bfefrmtrm_dt"]: l["bfefrmtrm_amount"]}, {l["frmtrm_dt"]: l["frmtrm_amount"]},
-                                {l["thstrm_dt"]: l["thstrm_amount"]}])
-                        else:
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm].extend([
-                                {l["frmtrm_dt"]: l["frmtrm_amount"]},
-                                {l["thstrm_dt"]: l["thstrm_amount"]}])
+                        if l["sj_nm"] == "손익계산서":
+                            if "누계" not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"] = {}
+                            if "당기" not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"] = {}
+                            if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm] = {}
+                            if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm] = {}
 
-                    if l["sj_nm"] == "손익계산서":
-                        if "누계" not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"] = {}
-                        if "당기" not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"] = {}
-                        if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"].keys():
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm] = []
-                        if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"].keys():
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm] = []
-
-                        if reprt_code == "11011":
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm].extend([
-                                {l["bfefrmtrm_dt"]: l["bfefrmtrm_amount"]}, {l["frmtrm_dt"]: l["frmtrm_amount"]},
-                                {l["thstrm_dt"]: l["thstrm_amount"]}])
-                        else:
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm].extend([
-                                {l["frmtrm_dt"]: l["frmtrm_amount"]},
-                                {l["thstrm_dt"]: l["thstrm_amount"]}])
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm].extend([
-                                {l["frmtrm_dt"]: l["frmtrm_add_amount"]},
-                                {l["thstrm_dt"]: l["thstrm_add_amount"]}])
-
+                            if reprt_code == "11011" and l["fs_div"] == "CFS":
+                                if "bfefrmtrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                        l["bfefrmtrm_dt"]] = l["bfefrmtrm_amount"] if l[
+                                                                                          "bfefrmtrm_amount"] != "-" else "0"
+                                if "frmtrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                        l["frmtrm_dt"]] = l["frmtrm_amount"] if l["frmtrm_amount"] != "-" else "0"
+                                if "thstrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                        l["thstrm_dt"]] = l["thstrm_amount"] if l["thstrm_amount"] != "-" else "0"
+                            else:
+                                if "frmtrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm][
+                                        l["frmtrm_dt"]] = l["frmtrm_amount"] if l["frmtrm_amount"] != "-" else "0"
+                                if "thstrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm][
+                                        l["thstrm_dt"]] = l["thstrm_amount"] if l["thstrm_amount"] != "-" else "0"
+                                if "frmtrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                        l["frmtrm_dt"]] = l["frmtrm_amount"] if l["frmtrm_amount"] != "-" else "0"
+                                if "thstrm_dt" in l.keys():
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                        l["thstrm_dt"]] = l["thstrm_amount"] if l["thstrm_amount"] != "-" else "0"
+            except Exception as e:
+                print(e)
+                print(ret)
         # print(retDict)
         return retDict
-    
-    
+
+
 
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    date = "20201228"
-    # dart.get_shared_reporting(date)
-    # dart.get_majorshareholder_reporting(date)
-    dart.get_majorevent_reporting(date)
-    dart.get_freecapital_increasing_corp_info(date)
+    # date = "20201229"
+    # # dart.get_shared_reporting(date)
+    # # dart.get_majorshareholder_reporting(date)
+    # dart.get_majorevent_reporting(date)
+    # dart.get_freecapital_increasing_corp_info(date)
 
     # ret, code = dart.get_corp_code('005930')
-    # ret, code = dart.get_corp_code('326030')
-    # # print(ret, code)
-    # lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
-    # for l in lists:
-    #     print(l)
-    # # print(lists)
-    # req_list = dart.get_req_lists(lists)
-    # dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
+    ret, code = dart.get_corp_code('299030')
+    # print(ret, code)
+    lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
+    for l in lists:
+        print(l)
+    # print(lists)
+    req_list = dart.get_req_lists(lists)
+    print(dart.get_fnlttSinglAcnt_from_req_list(code, req_list))
