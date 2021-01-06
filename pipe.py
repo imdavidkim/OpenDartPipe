@@ -347,6 +347,12 @@ class Pipe:
                             reprt_ty_code = self.reprt_ty_codes[key]
                             req_list.append([base_year, reprt_ty_code])
                             break
+            # first_list = lists[:1]
+            # if first_list:
+            #     base_year = res[0]['report_nm'].split(".")[0][-4:]
+            #     reprt_type = "반기보고서"
+            #     reprt_ty_code = self.reprt_ty_codes[reprt_type]
+            #     req_list.append([base_year, reprt_ty_code])
             return req_list
             # if base_idx is not None:
             #     for idx, l in enumerate(lists):
