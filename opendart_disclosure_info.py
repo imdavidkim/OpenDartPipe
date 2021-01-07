@@ -82,7 +82,8 @@ def get_list_json(crtfc_key, corp_code=None, bgn_de=None, end_de=None, last_repr
     list_data = json.loads(res.content)
     retJson = list_data
     if list_data['status'] == '013':
-        return None
+        retJson["list"] = []
+        return retJson
     else:
         if list_data["total_page"] != list_data["page_no"]:
             cur_page = list_data["page_no"] + 1
