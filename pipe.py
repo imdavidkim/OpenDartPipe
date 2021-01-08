@@ -380,7 +380,7 @@ class Pipe:
                 # print(ret)
                 if "list" in ret.keys():
                     for l in ret["list"]:
-                        print(l)
+                        # print(l)
                         if l["fs_nm"] not in retDict.keys():
                             retDict[l["fs_nm"]] = {}
                         # print(retDict)
@@ -459,6 +459,8 @@ class Pipe:
                                 if "frmtrm_dt" in l.keys():
                                     retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
                                         l["frmtrm_dt"]] = l["frmtrm_amount"] if l["frmtrm_amount"] != "-" else "0"
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm][
+                                        l["frmtrm_dt"]] = l["frmtrm_amount"] if l["frmtrm_amount"] != "-" else "0"
                                     if "bfefrmtrm_dt" in l.keys():
                                         if retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][l["bfefrmtrm_dt"]] != "0" and l["frmtrm_amount"] != "-":
                                             retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][
@@ -469,9 +471,16 @@ class Pipe:
                                 if "thstrm_dt" in l.keys():
                                     retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
                                         l["thstrm_dt"]] = l["thstrm_amount"] if l["thstrm_amount"] != "-" else "0"
+                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm][
+                                        l["thstrm_dt"]] = l["thstrm_amount"] if l["thstrm_amount"] != "-" else "0"
                                     if "frmtrm_dt" in l.keys():
                                         if retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][l["frmtrm_dt"]] != "0" and l["thstrm_amount"] != "-":
                                             retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][
+                                                "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
+                                                l["thstrm_amount"].replace(",", "")) - float(
+                                                l["frmtrm_amount"].replace(",", ""))) / float(
+                                                l["frmtrm_amount"].replace(",", "")) * 100, 2)
+                                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_amount"].replace(",", "")) - float(
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
@@ -514,20 +523,20 @@ class Pipe:
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    # date = "20210106"
-    # # dart.get_shared_reporting(date)
-    # # dart.get_majorshareholder_reporting(date)
-    # dart.get_majorevent_reporting(date)
-    # dart.get_freecapital_increasing_corp_info(date)
+    date = "20210107"
+    # dart.get_shared_reporting(date)
+    # dart.get_majorshareholder_reporting(date)
+    dart.get_majorevent_reporting(date)
+    dart.get_freecapital_increasing_corp_info(date)
 
-    ret, code = dart.get_corp_code('005930')
-    # ret, code = dart.get_corp_code('299030')
-    # print(ret, code)
-    # print(dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A'))
-    lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
-    for l in lists:
-        print(l)
-    # print(lists)
-    req_list, req_list2 = dart.get_req_lists(lists)
-    print(dart.get_fnlttSinglAcnt_from_req_list(code, req_list))
-    # # print(dart.get_fnlttSinglAcntAll(code, "2020", "11014"))
+    # ret, code = dart.get_corp_code('005930')
+    # # ret, code = dart.get_corp_code('299030')
+    # # print(ret, code)
+    # # print(dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A'))
+    # lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
+    # for l in lists:
+    #     print(l)
+    # # print(lists)
+    # req_list, req_list2 = dart.get_req_lists(lists)
+    # print(dart.get_fnlttSinglAcnt_from_req_list(code, req_list))
+    # # # print(dart.get_fnlttSinglAcntAll(code, "2020", "11014"))
