@@ -160,10 +160,10 @@ class Pipe:
     # -- Opendart : 공시정보 끝
 
     # -- Opendart : 상장기업 재무정보
-    def get_fnlttSinglAcntAll(self, corp_code, bsns_year, reprt_code="11014", fs_div="CFS"):
+    def get_fnlttSinglAcntAll(self, corp_code, bsns_year, reprt_code="11014"):
         ret, code = self.get_corp_code(corp_code)
         if ret:
-            return ci.get_fnlttSinglAcntAll_json(self.api_key, code, bsns_year, reprt_code, fs_div)
+            return ci.get_fnlttSinglAcntAll_json(self.api_key, code, bsns_year, reprt_code)
 
     def get_fnlttSinglAcnt(self, corp_code, bsns_year, reprt_code="11014"):
         ret, code = self.get_corp_code(corp_code)
@@ -362,7 +362,7 @@ class Pipe:
         req_list2 = list(set(req_list2))
         return req_list, req_list2
 
-    def get_fnlttSinglAcnt_from_req_list(self, corp_code, req_list):
+    def get_fnlttSinglAcnt_from_req_list(self, corp_code, req_list, all_or_not=None):
         retDict = {}
         ret = None
         yyyy_report_nm = None
@@ -376,11 +376,17 @@ class Pipe:
             elif reprt_code == "11014":
                 yyyy_report_nm = "{} 3/4".format(bsns_year)
             try:
-                ret = self.get_fnlttSinglAcnt(corp_code, bsns_year, reprt_code)
+                if all_or_not:
+                    ret = self.get_fnlttSinglAcntAll(corp_code, bsns_year, reprt_code)
+                else:
+                    ret = self.get_fnlttSinglAcnt(corp_code, bsns_year, reprt_code)
                 # print(ret)
                 if "list" in ret.keys():
                     for l in ret["list"]:
                         # print(l)
+                        if "fs_nm" not in l.keys():
+                            l["fs_nm"] = "연결재무제표"
+                            # print(l)
                         if l["fs_nm"] not in retDict.keys():
                             retDict[l["fs_nm"]] = {}
                         # print(retDict)
@@ -390,11 +396,18 @@ class Pipe:
                         if l["account_nm"] not in retDict[l["fs_nm"]][l["sj_nm"]].keys():
                             retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]] = {}
                         # print(retDict)
-                        if l["sj_nm"] == "재무상태표":
+                        if l["sj_nm"] == "재무상태표" or l["sj_nm"] == "현금흐름표" or l["sj_nm"] == "자본변동표":
                             if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
                                 retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm] = {}
                                 retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["{} Rate".format(yyyy_report_nm)] = {}
-                            if reprt_code == "11011" and l["fs_div"] == "CFS":
+                            if reprt_code == "11011": # and l["fs_div"] == "CFS":
+                                if "bfefrmtrm_dt" not in l.keys() and "bfefrmtrm_nm" in l.keys():
+                                    l["bfefrmtrm_dt"] = l["bfefrmtrm_nm"]
+                                if "frmtrm_dt" not in l.keys() and "frmtrm_nm" in l.keys():
+                                    l["frmtrm_dt"] = l["frmtrm_nm"]
+                                if "thstrm_dt" not in l.keys() and "thstrm_nm" in l.keys():
+                                    l["thstrm_dt"] = l["thstrm_nm"]
+
                                 if "bfefrmtrm_dt" in l.keys():
                                     retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][
                                         l["bfefrmtrm_dt"]] = l["bfefrmtrm_amount"] if l["bfefrmtrm_amount"] != "-" else "0"
@@ -419,6 +432,11 @@ class Pipe:
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
                                                 l["frmtrm_amount"].replace(",", "")) * 100, 2)
                             else:
+                                if "frmtrm_dt" not in l.keys() and "frmtrm_nm" in l.keys():
+                                    l["frmtrm_dt"] = l["frmtrm_nm"]
+                                if "thstrm_dt" not in l.keys() and "thstrm_nm" in l.keys():
+                                    l["thstrm_dt"] = l["thstrm_nm"]
+
                                 # if "frmtrm_dt" in l.keys() and "frmtrm_add_amount" in l.keys():
                                 #     retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][l["frmtrm_dt"]] = \
                                 #     l["frmtrm_add_amount"] if l["frmtrm_add_amount"] != "-" else "0"
@@ -439,7 +457,18 @@ class Pipe:
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
                                                 l["frmtrm_amount"].replace(",", "")) * 100, 2)
 
-                        if l["sj_nm"] == "손익계산서":
+                        if l["sj_nm"] == "손익계산서" or l["sj_nm"] == "포괄손익계산서":
+                            if reprt_code == "11011":
+                                if "frmtrm_dt" not in l.keys() and "frmtrm_nm" in l.keys():
+                                    l["frmtrm_dt"] = l["frmtrm_nm"]
+                                if "thstrm_dt" not in l.keys() and "thstrm_nm" in l.keys():
+                                    l["thstrm_dt"] = l["thstrm_nm"]
+                            else:
+                                if "frmtrm_amount" not in l.keys() and "frmtrm_q_nm" in l.keys():
+                                    l["frmtrm_dt"] = l["frmtrm_q_nm"]
+                                    l["frmtrm_amount"] = l["frmtrm_q_amount"]
+                                if "thstrm_dt" not in l.keys() and "thstrm_nm" in l.keys():
+                                    l["thstrm_dt"] = l["thstrm_nm"]
                             if "누계" not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
                                 retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"] = {}
                             if "당기" not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
@@ -523,7 +552,7 @@ class Pipe:
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    date = "20210107"
+    date = "20210108"
     # dart.get_shared_reporting(date)
     # dart.get_majorshareholder_reporting(date)
     dart.get_majorevent_reporting(date)
