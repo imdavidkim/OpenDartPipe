@@ -247,7 +247,7 @@ class Pipe:
         for corp in corp_code_list:
             if corp["stock_code"] == "": continue
             print(corp["rcept_no"], corp["corp_code"], corp["corp_name"])
-            msg[corp["corp_name"]] = {"rcept_no": corp["rcept_no"], "corp_code": corp["corp_code"], "stock_code": corp["stock_code"], "url": "http://dart.fss.or.kr/dsaf001/main.do?rcpNo={}".format(corp["rcept_no"])}
+            msg[corp["corp_name"]] = {"rcept_no": corp["rcept_no"], "corp_code": corp["corp_code"], "stock_code": corp["stock_code"], "보고서명": corp["report_nm"], "url": "http://dart.fss.or.kr/dsaf001/main.do?rcpNo={}".format(corp["rcept_no"])}
             soup = BeautifulSoup(self.get_document_xhml(corp["rcept_no"], corp["stock_code"], corp["corp_code"], corp["corp_name"], "FreeCapitalIncreasing"), 'lxml')
 
             # 신주배정기준일
@@ -575,12 +575,12 @@ class Pipe:
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    date = "20210108"
+    date = "20210111"
     # dart.get_shared_reporting(date)
     # dart.get_majorshareholder_reporting(date)
     # dart.get_majorevent_reporting(date)
-    # dart.get_freecapital_increasing_corp_info(date)
-    # dart.get_krx_reporting(date)
+    dart.get_freecapital_increasing_corp_info(date)
+    dart.get_krx_reporting(date)
     dart.get_provisional_performance_reporting_corp_info(date)
 
     # ret, code = dart.get_corp_code('005930')
