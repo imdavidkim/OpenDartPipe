@@ -319,6 +319,7 @@ class Pipe:
             txt = ""
 
     def get_provisional_performance_reporting_corp_info(self, base_date):
+        from html_table_parser import parser_functions as parser
         corp_code_list = db.getProvisionalPerformanceReportingInfo(base_date)
         print(corp_code_list)
         msg = {}
@@ -331,11 +332,23 @@ class Pipe:
                                           corp["rcept_no"])}
             soup = BeautifulSoup(
                 self.get_document_xhml(corp["rcept_no"], corp["stock_code"], corp["corp_code"], corp["corp_name"],
-                                       "ProvisionalPerformance"), 'lxml')
+                                       "ProvisionalPerformance"), 'html.parser')
 
-            # test = soup.find_all("table", {"id": "XFormD1_Form0_RepeatTable0"}).source
-            # print(test)
-            print(soup.prettify())
+            # html_table = parser.make2d(soup)
+            # print(html_table)
+            table = soup.find(id=True)
+            if table["id"] == "XFormD1_Form0_RepeatTable0": # 코스피
+                pass
+            elif table["id"] == "XFormD1_Form0_RepeatTable1": # 코스닥
+                pass
+
+            html_table_list = parser.make2d(table)
+
+            for h in html_table_list:
+
+                print(len(h), h)
+            # print(type(test), test)
+            # print(soup.prettify())
 
     def get_req_lists(self, lists):
         req_list = []
