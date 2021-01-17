@@ -318,7 +318,7 @@ class Pipe:
             messenger.free_cap_inc_message_to_telegram(txt)
             txt = ""
 
-        def get_provisional_performance_reporting_corp_info(self, base_date):
+    def get_provisional_performance_reporting_corp_info(self, base_date):
         from html_table_parser import parser_functions as parser
         corp_code_list = db.getProvisionalPerformanceReportingInfo(base_date)
         print(corp_code_list)
