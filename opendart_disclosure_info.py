@@ -17,7 +17,7 @@ def getConfig():
     import configparser
     global path, doc_path, apikey, yyyymmdd
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read(r'C:/Users/Kim/Documents/Projects/Waver/OpenDartPipe/config.ini')
     apikey = config['DART']['SEARCH-API-KEY']
     path = config['COMMON']['REPORT_PATH']
     doc_path = config['COMMON']['DOCUMENT_PATH']
@@ -34,6 +34,7 @@ def get_corpcode_dict(crtfc_key):
     data = None
     yyyymmdd = str(datetime.now())[:10]
     workDir = r'{}\{}\{}'.format(path, "DartCorpCode", yyyymmdd)
+    print(workDir)
     if not os.path.exists(workDir):
         os.makedirs(workDir)
     if os.path.exists(r'{}\DartCorpCode.{}.json'.format(workDir, yyyymmdd)):
@@ -139,14 +140,22 @@ def get_document_xhml(api_key, rcp_no, stock_code, corp_code, corp_name, dir_nam
         status = tree.find('status').text
         message = tree.find('message').text
         if status != '000':
-            raise ValueError({'status': status, 'message': message})
+            if status == '014':
+                print(rcp_no, stock_code, corp_code, corp_name, {'status': status, 'message': message})
+                return None
+            else:
+                raise ValueError({'status': status, 'message': message})
     except ET.ParseError as e:
         pass
     zf = zipfile.ZipFile(io.BytesIO(r.content))
     info_list = zf.infolist()
     xml_data = zf.read(info_list[0].filename)
-    xml_text = xml_data.replace(b'encoding="utf-8"', b'encoding="euc-kr"').decode('euc-kr')
-    # xml_text = xml_data.decode('x-windows-949')
+    try:
+        xml_text = xml_data.replace(b'encoding="utf-8"', b'encoding="euc-kr"').decode('euc-kr')
+        # xml_text = xml_data.decode('x-windows-949')
+    except Exception as e:
+        # print(rcp_no, stock_code, corp_code, corp_name, xml_data)
+        xml_text = xml_data.replace(b'encoding="utf-8"', b'encoding="euc-kr"').decode('cp949')
 
     # save document to cache
     with open(fn, 'wt') as f:
