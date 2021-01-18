@@ -8,6 +8,7 @@ import detective.fnguide_collector as fc
 import detective.messenger as messenger
 import pandas as pd
 from bs4 import BeautifulSoup
+from html_table_parser import parser_functions as parser
 import requests
 import json
 
@@ -79,7 +80,7 @@ class Pipe:
         "증권신고(유동화증권등)": "H003",
         "채권유동화계획/양도등록": "H004",
         "수시보고": "H005",
-        "주요사항보고서": "H006",
+        "주요사항보고서(거래소)": "H006",
         "수시공시": "I001",
         "공정공시": "I002",
         "시장조치/안내": "I003",
@@ -189,8 +190,13 @@ class Pipe:
     def get_majorevent_reporting(self, base_date):
         db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"], pblntf_detail_ty=self.pblntf_detail_ty_codes["주요사항보고서"]))
 
-    def get_krx_reporting(self, base_date):
-        db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["거래소공시"], pblntf_detail_ty=self.pblntf_detail_ty_codes["공정공시"]))
+    def get_krx_reporting(self, base_date, target_date=None):
+        if target_date is None:
+            db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["거래소공시"],
+                                                 pblntf_detail_ty=self.pblntf_detail_ty_codes["공정공시"]))
+        else:
+            db.ResultListDataStore(dart.get_list(bgn_de=base_date, end_de=target_date, pblntf_ty=self.pblntf_ty_codes["거래소공시"],
+                                                 pblntf_detail_ty=self.pblntf_detail_ty_codes["공정공시"]))
 
     def get_majorshareholder_reporting(self, base_date):
         corp_code_list = db.getMajorShareholderReportingInfo(base_date)
@@ -318,9 +324,13 @@ class Pipe:
             messenger.free_cap_inc_message_to_telegram(txt)
             txt = ""
 
-    def get_provisional_performance_reporting_corp_info(self, base_date):
+    def get_provisional_performance_reporting_corp_info(self, base_date, target_date=None):
         from html_table_parser import parser_functions as parser
-        corp_code_list = db.getProvisionalPerformanceReportingInfo(base_date)
+        corp_code_list = None
+        if target_date is None:
+            corp_code_list = db.getProvisionalPerformanceReportingInfo(base_date)
+        else:
+            corp_code_list = db.getProvisionalPerformanceReportingInfo(base_date, target_date)
         print(corp_code_list)
         data = {}
         unit = None
@@ -331,47 +341,51 @@ class Pipe:
             data[corp["stock_code"]] = {"corp_code": corp["corp_code"],
                                         "corp_name": corp["corp_name"],
                                         "PL": {"Y": {}, "Q": {}}}
-            soup = BeautifulSoup(
-                self.get_document_xhml(corp["rcept_no"], corp["stock_code"], corp["corp_code"], corp["corp_name"],
-                                       "ProvisionalPerformance"), 'html.parser')
+            doc = self.get_document_xhml(corp["rcept_no"], corp["stock_code"], corp["corp_code"], corp["corp_name"],
+                                         "ProvisionalPerformance")
+            if doc:
+                unit = None
+                soup = BeautifulSoup(doc, 'html.parser')
 
-            # html_table = parser.make2d(soup)
-            # print(html_table)
-            table = soup.find(id=True)
-            # if table["id"] == "XFormD1_Form0_RepeatTable0": # 코스피
-            #     pass
-            # elif table["id"] == "XFormD1_Form0_RepeatTable1": # 코스닥
-            #     pass
+                # html_table = parser.make2d(soup)
+                # print(html_table)
+                table = soup.find(id=True)
+                # if table["id"] == "XFormD1_Form0_RepeatTable0": # 코스피
+                #     pass
+                # elif table["id"] == "XFormD1_Form0_RepeatTable1": # 코스닥
+                #     pass
 
-            html_table_list = parser.make2d(table)
-            for h in html_table_list:
-                for c in h:
-                    if "단위" in c:
-                        tmp = c.split(":")[1].strip()
-                        if ',' in tmp:
-                            tmp2 = tmp.split(",")[0].strip()
-                        else:
-                            tmp2 = tmp
-                        if tmp2 == "백만원":
-                            unit = 1000000
-                        elif tmp2 == "억원":
-                            unit = 100000000
-                        elif tmp2 == "조원":
-                            unit = 1000000000000
-                        break
-                if unit is not None: break
-            for h in html_table_list:
-                if h[0] in ['매출액', '영업이익', '법인세비용차감전계속사업이익', '당기순이익', '지배기업 소유주지분 순이익']:
-                    if h[1] == "당해실적":
-                        if h[2] != "-":
-                            data[corp["stock_code"]]["PL"]["Q"][h[0]] = float(h[2].replace(",", "")) * unit
-                        else:
-                            data[corp["stock_code"]]["PL"]["Q"][h[0]] = 0
-                    if h[1] == "누계실적":
-                        if h[2] != "-":
-                            data[corp["stock_code"]]["PL"]["Y"][h[0]] = float(h[2].replace(",", "")) * unit
-                        else:
-                            data[corp["stock_code"]]["PL"]["Y"][h[0]] = 0
+                html_table_list = parser.make2d(table)
+                for h in html_table_list:
+                    for c in h:
+                        print(c)
+                        if "단위" in c:
+                            tmp = c.split(":")[1].strip()
+                            if ',' in tmp:
+                                tmp2 = tmp.split(",")[0].strip()
+                            else:
+                                tmp2 = tmp
+                            print("[{}]".format(tmp2))
+                            if tmp2 == "백만원":
+                                unit = 1000000
+                            elif tmp2 == "억원":
+                                unit = 100000000
+                            elif tmp2 == "조원":
+                                unit = 1000000000000
+                            break
+                    if unit is not None: break
+                for h in html_table_list:
+                    if h[0] in ['매출액', '영업이익', '법인세비용차감전계속사업이익', '당기순이익', '지배기업 소유주지분 순이익']:
+                        if h[1] == "당해실적":
+                            if h[2] != "-":
+                                data[corp["stock_code"]]["PL"]["Q"][h[0]] = float(h[2].replace(",", "")) * unit
+                            else:
+                                data[corp["stock_code"]]["PL"]["Q"][h[0]] = 0
+                        if h[1] == "누계실적":
+                            if h[2] != "-":
+                                data[corp["stock_code"]]["PL"]["Y"][h[0]] = float(h[2].replace(",", "")) * unit
+                            else:
+                                data[corp["stock_code"]]["PL"]["Y"][h[0]] = 0
         print(data)
 
     def get_req_lists(self, lists):
@@ -389,7 +403,8 @@ class Pipe:
                 reprt_type = "사업보고서"
                 reprt_ty_code = self.reprt_ty_codes[reprt_type]
                 req_list.append((base_year, reprt_ty_code))
-                req_list2.append((base_year, reprt_ty_code))
+                if base_idx == 0: req_list2.append((base_year, reprt_ty_code))
+                # req_list2.append((base_year, reprt_ty_code))
             res = list(filter(lambda l: "반기" in l['report_nm'], lists))
             if len(res) > 0:
                 base_idx = lists.index(res[0])
@@ -442,7 +457,7 @@ class Pipe:
                 # print(ret)
                 if "list" in ret.keys():
                     for l in ret["list"]:
-                        print(l)
+                        # print(l)
                         # if reprt_code == "11011": print(l)
                         if "fs_nm" not in l.keys():
                             l["fs_nm"] = "연결재무제표"
@@ -612,13 +627,17 @@ class Pipe:
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    date = "20210111"
+    # date = "20210108"
+    date = "20210108"
+    target_date = '20210108'
     # dart.get_shared_reporting(date)
     # dart.get_majorshareholder_reporting(date)
     # dart.get_majorevent_reporting(date)
-    dart.get_freecapital_increasing_corp_info(date)
-    dart.get_krx_reporting(date)
-    dart.get_provisional_performance_reporting_corp_info(date)
+    # dart.get_freecapital_increasing_corp_info(date)
+    # dart.get_krx_reporting(date)
+    # dart.get_provisional_performance_reporting_corp_info(date)
+    # dart.get_krx_reporting(date, target_date)
+    dart.get_provisional_performance_reporting_corp_info(date, target_date)
 
     # ret, code = dart.get_corp_code('005930')
     # # ret, code = dart.get_corp_code('299030')
