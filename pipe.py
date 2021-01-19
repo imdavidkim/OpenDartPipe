@@ -8,7 +8,6 @@ import detective.fnguide_collector as fc
 import detective.messenger as messenger
 import pandas as pd
 from bs4 import BeautifulSoup
-from html_table_parser import parser_functions as parser
 import requests
 import json
 
@@ -184,11 +183,19 @@ class Pipe:
         if ret:
             return si.get_elestock_json(self.api_key, code)
 
-    def get_shared_reporting(self, base_date):
-        db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["지분공시"]))
+    def get_shared_reporting(self, base_date, target_date=None):
+        if target_date is None:
+            db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["지분공시"]))
+        else:
+            db.ResultListDataStore(dart.get_list(bgn_de=base_date, end_de=target_date, pblntf_ty=self.pblntf_ty_codes["지분공시"]))
 
-    def get_majorevent_reporting(self, base_date):
-        db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"], pblntf_detail_ty=self.pblntf_detail_ty_codes["주요사항보고서"]))
+    def get_majorevent_reporting(self, base_date, target_date=None):
+        if target_date is None:
+            db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"],
+                                                 pblntf_detail_ty=self.pblntf_detail_ty_codes["주요사항보고서"]))
+        else:
+            db.ResultListDataStore(dart.get_list(bgn_de=base_date, end_de=target_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"],
+                                                 pblntf_detail_ty=self.pblntf_detail_ty_codes["주요사항보고서"]))
 
     def get_krx_reporting(self, base_date, target_date=None):
         if target_date is None:
@@ -387,6 +394,7 @@ class Pipe:
                             else:
                                 data[corp["stock_code"]]["PL"]["Y"][h[0]] = 0
         print(data)
+        return data
 
     def get_req_lists(self, lists):
         req_list = []
@@ -627,17 +635,18 @@ class Pipe:
 if __name__ == "__main__":
     dart = Pipe()
     dart.create()
-    # date = "20210108"
-    date = "20210108"
-    target_date = '20210108'
+    date = '20210118'
     # dart.get_shared_reporting(date)
     # dart.get_majorshareholder_reporting(date)
     # dart.get_majorevent_reporting(date)
     # dart.get_freecapital_increasing_corp_info(date)
     # dart.get_krx_reporting(date)
-    # dart.get_provisional_performance_reporting_corp_info(date)
-    # dart.get_krx_reporting(date, target_date)
-    dart.get_provisional_performance_reporting_corp_info(date, target_date)
+    dart.get_provisional_performance_reporting_corp_info(date)
+
+    # fromdate = "20190101"
+    # todate = "20190228"
+    # dart.get_krx_reporting(fromdate, todate)
+    # dart.get_provisional_performance_reporting_corp_info(fromdate, todate)
 
     # ret, code = dart.get_corp_code('005930')
     # # ret, code = dart.get_corp_code('299030')
@@ -649,4 +658,6 @@ if __name__ == "__main__":
     # # print(lists)
     # req_list, req_list2 = dart.get_req_lists(lists)
     # print(dart.get_fnlttSinglAcnt_from_req_list(code, req_list))
+    # print("*"*150)
+    # print(dart.get_fnlttSinglAcnt_from_req_list(code, req_list2, "ALL"))
     # # # print(dart.get_fnlttSinglAcntAll(code, "2020", "11014"))
