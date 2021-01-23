@@ -446,6 +446,7 @@ class Pipe:
 
     def get_fnlttSinglAcnt_from_req_list(self, corp_code, req_list, all_or_not=None):
         retDict = {}
+        curr = None
         ret = None
         yyyy_report_nm = None
         for bsns_year, reprt_code in req_list:
@@ -465,6 +466,7 @@ class Pipe:
                 # print(ret)
                 if "list" in ret.keys():
                     for l in ret["list"]:
+                        curr = l
                         # print(l)
                         # if reprt_code == "11011": print(l)
                         if "fs_nm" not in l.keys():
@@ -579,7 +581,7 @@ class Pipe:
                                                 "{} Rate".format(yyyy_report_nm)]["전기"] = round((float(
                                                 l["frmtrm_amount"].replace(",", "")) - float(
                                                 l["bfefrmtrm_amount"].replace(",", ""))) / float(
-                                                l["bfefrmtrm_amount"].replace(",", "")) * 100, 2)
+                                                l["bfefrmtrm_amount"].replace(",", "")) * 100, 2) if l["frmtrm_amount"] != "" and l["bfefrmtrm_amount"] != "" else 0
                                 if "thstrm_dt" in l.keys():
                                     retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
                                         l["thstrm_dt"]] = l["thstrm_amount"] if l["thstrm_amount"] != "-" and l["thstrm_amount"] != "" else "0"
@@ -591,12 +593,12 @@ class Pipe:
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_amount"].replace(",", "")) - float(
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
-                                                l["frmtrm_amount"].replace(",", "")) * 100, 2)
+                                                l["frmtrm_amount"].replace(",", "")) * 100, 2) if l["thstrm_amount"] != "" and l["frmtrm_amount"] != "" else 0
                                             retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_amount"].replace(",", "")) - float(
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
-                                                l["frmtrm_amount"].replace(",", "")) * 100, 2)
+                                                l["frmtrm_amount"].replace(",", "")) * 100, 2) if l["thstrm_amount"] != "" and l["frmtrm_amount"] != "" else 0
                             else:
                                 if "frmtrm_dt" in l.keys() and "frmtrm_add_amount" in l.keys():
                                     retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
@@ -610,7 +612,7 @@ class Pipe:
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_add_amount"].replace(",", "")) - float(
                                                 l["frmtrm_add_amount"].replace(",", ""))) / float(
-                                                l["frmtrm_add_amount"].replace(",", "")) * 100, 2)
+                                                l["frmtrm_add_amount"].replace(",", "")) * 100, 2) if l["thstrm_add_amount"] != "" and l["frmtrm_add_amount"] != "" else 0
                                 if "frmtrm_dt" in l.keys():
                                     retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm][
                                         l["frmtrm_dt"]] = l["frmtrm_amount"] if l["frmtrm_amount"] != "-" and l["frmtrm_amount"] != "" else "0"
@@ -623,10 +625,10 @@ class Pipe:
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_amount"].replace(",", "")) - float(
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
-                                                l["frmtrm_amount"].replace(",", "")) * 100, 2)
+                                                l["frmtrm_amount"].replace(",", "")) * 100, 2) if l["thstrm_amount"] != "" and l["frmtrm_amount"] != "" else 0
             except Exception as e:
                 print(e)
-                print(ret)
+                print(l)
         # print(retDict)
         return retDict
 
