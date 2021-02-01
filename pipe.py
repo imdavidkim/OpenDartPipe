@@ -185,24 +185,24 @@ class Pipe:
 
     def get_shared_reporting(self, base_date, target_date=None):
         if target_date is None:
-            db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["지분공시"]))
+            db.ResultListDataStore(self.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["지분공시"]))
         else:
-            db.ResultListDataStore(dart.get_list(bgn_de=base_date, end_de=target_date, pblntf_ty=self.pblntf_ty_codes["지분공시"]))
+            db.ResultListDataStore(self.get_list(bgn_de=base_date, end_de=target_date, pblntf_ty=self.pblntf_ty_codes["지분공시"]))
 
     def get_majorevent_reporting(self, base_date, target_date=None):
         if target_date is None:
-            db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"],
+            db.ResultListDataStore(self.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"],
                                                  pblntf_detail_ty=self.pblntf_detail_ty_codes["주요사항보고서"]))
         else:
-            db.ResultListDataStore(dart.get_list(bgn_de=base_date, end_de=target_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"],
+            db.ResultListDataStore(self.get_list(bgn_de=base_date, end_de=target_date, pblntf_ty=self.pblntf_ty_codes["주요사항보고"],
                                                  pblntf_detail_ty=self.pblntf_detail_ty_codes["주요사항보고서"]))
 
     def get_krx_reporting(self, base_date, target_date=None):
         if target_date is None:
-            db.ResultListDataStore(dart.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["거래소공시"],
+            db.ResultListDataStore(self.get_list(bgn_de=base_date, pblntf_ty=self.pblntf_ty_codes["거래소공시"],
                                                  pblntf_detail_ty=self.pblntf_detail_ty_codes["공정공시"]))
         else:
-            db.ResultListDataStore(dart.get_list(bgn_de=base_date, end_de=target_date, pblntf_ty=self.pblntf_ty_codes["거래소공시"],
+            db.ResultListDataStore(self.get_list(bgn_de=base_date, end_de=target_date, pblntf_ty=self.pblntf_ty_codes["거래소공시"],
                                                  pblntf_detail_ty=self.pblntf_detail_ty_codes["공정공시"]))
 
     def get_majorshareholder_reporting(self, base_date):
@@ -365,14 +365,14 @@ class Pipe:
                 html_table_list = parser.make2d(table)
                 for h in html_table_list:
                     for c in h:
-                        print(c)
+                        # print(c)
                         if "단위" in c:
                             tmp = c.split(":")[1].strip()
                             if ',' in tmp:
                                 tmp2 = tmp.split(",")[0].strip()
                             else:
                                 tmp2 = tmp
-                            print("[{}]".format(tmp2))
+                            # print("[{}]".format(tmp2))
                             if tmp2 == "백만원":
                                 unit = 1000000
                             elif tmp2 == "억원":
@@ -467,7 +467,7 @@ class Pipe:
                 if "list" in ret.keys():
                     for l in ret["list"]:
                         curr = l
-                        # print(l)
+                        print(l)
                         # if reprt_code == "11011": print(l)
                         if "fs_nm" not in l.keys():
                             l["fs_nm"] = "연결재무제표"
@@ -543,6 +543,8 @@ class Pipe:
                                                 l["frmtrm_amount"].replace(",", "")) * 100, 2)
 
                         if l["sj_nm"] == "손익계산서" or l["sj_nm"] == "포괄손익계산서":
+                            if corp_code == "00126308":
+                                print()
                             if reprt_code == "11011":
                                 if "frmtrm_dt" not in l.keys() and "frmtrm_nm" in l.keys():
                                     l["frmtrm_dt"] = l["frmtrm_nm"]
@@ -600,6 +602,8 @@ class Pipe:
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
                                                 l["frmtrm_amount"].replace(",", "")) * 100, 2) if l["thstrm_amount"] != "" and l["frmtrm_amount"] != "" else 0
                             else:
+                                if l["account_nm"] == "영업이익" and corp_code == "00126308":
+                                    print()
                                 if "frmtrm_dt" in l.keys() and "frmtrm_add_amount" in l.keys():
                                     retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
                                         l["frmtrm_dt"]] = l["frmtrm_add_amount"] if l["frmtrm_add_amount"] != "-" else "0"
@@ -643,23 +647,23 @@ if __name__ == "__main__":
     # dart.get_majorevent_reporting(date)
     # dart.get_freecapital_increasing_corp_info(date)
     # dart.get_krx_reporting(date)
-    dart.get_provisional_performance_reporting_corp_info(date)
+    # dart.get_provisional_performance_reporting_corp_info(date)
 
     # fromdate = "20190101"
     # todate = "20190228"
     # dart.get_krx_reporting(fromdate, todate)
     # dart.get_provisional_performance_reporting_corp_info(fromdate, todate)
 
-    # ret, code = dart.get_corp_code('005930')
-    # # ret, code = dart.get_corp_code('299030')
-    # # print(ret, code)
-    # # print(dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A'))
-    # lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
+    ret, code = dart.get_corp_code('028050')
+    # ret, code = dart.get_corp_code('299030')
+    # print(ret, code)
+    # print(dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A'))
+    lists = dart.get_list(corp_code=code, bgn_de='20180101', pblntf_ty='A')["list"][:4]
     # for l in lists:
     #     print(l)
-    # # print(lists)
-    # req_list, req_list2 = dart.get_req_lists(lists)
+    # print(lists)
+    req_list, req_list2 = dart.get_req_lists(lists)
     # print(dart.get_fnlttSinglAcnt_from_req_list(code, req_list))
-    # print("*"*150)
-    # print(dart.get_fnlttSinglAcnt_from_req_list(code, req_list2, "ALL"))
-    # # # print(dart.get_fnlttSinglAcntAll(code, "2020", "11014"))
+    print("*"*150)
+    print(dart.get_fnlttSinglAcnt_from_req_list(code, req_list, "ALL"))
+    # # print(dart.get_fnlttSinglAcntAll(code, "2020", "11014"))
