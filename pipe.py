@@ -395,6 +395,74 @@ class Pipe:
                                 data[corp["stock_code"]]["PL"]["Y"][h[0]] = 0
         print(data)
         return data
+    
+    
+        def get_provisional_performance_reporting_corp_info_with_code(self, code, base_date, target_date=None):
+        from html_table_parser import parser_functions as parser
+        corp_code_list = None
+        if target_date is None:
+            corp_code_list = db.getProvisionalPerformanceReportingInfo(base_date)
+        else:
+            corp_code_list = db.getProvisionalPerformanceReportingInfo(base_date, target_date)
+        print(corp_code_list)
+        data = {}
+        unit = None
+
+        for corp in corp_code_list:
+            if corp["stock_code"] == "": continue
+            print(corp["rcept_no"], corp["corp_code"], corp["corp_name"])
+            data[corp["stock_code"]] = {"corp_code": corp["corp_code"],
+                                        "corp_name": corp["corp_name"],
+                                        "PL": {"Y": {}, "Q": {}}}
+            doc = self.get_document_xhml(corp["rcept_no"], corp["stock_code"], corp["corp_code"], corp["corp_name"],
+                                         "ProvisionalPerformance")
+            if doc:
+                unit = None
+                soup = BeautifulSoup(doc, 'html.parser')
+
+                # html_table = parser.make2d(soup)
+                # print(html_table)
+                table = soup.find(id=True)
+                # if table["id"] == "XFormD1_Form0_RepeatTable0": # 코스피
+                #     pass
+                # elif table["id"] == "XFormD1_Form0_RepeatTable1": # 코스닥
+                #     pass
+
+                html_table_list = parser.make2d(table)
+                for h in html_table_list:
+                    for c in h:
+                        # print(c)
+                        if "단위" in c:
+                            if len(c) > 20: continue
+                            tmp = c.split(":")[1].strip()
+                            if ',' in tmp:
+                                tmp2 = tmp.split(",")[0].strip()
+                            else:
+                                tmp2 = tmp
+                            print("[{}]".format(tmp2))
+                            if tmp2 == "백만원":
+                                unit = 1000000
+                            elif tmp2 == "억원":
+                                unit = 100000000
+                            elif tmp2 == "조원":
+                                unit = 1000000000000
+                            break
+                    if unit is not None: break
+                for h in html_table_list:
+                    if h[0] in ['매출액', '영업이익', '법인세비용차감전계속사업이익', '당기순이익', '지배기업 소유주지분 순이익']:
+                        if h[1] == "당해실적":
+                            if h[2] != "-":
+                                data[corp["stock_code"]]["PL"]["Q"][h[0]] = float(h[2].replace(",", "")) * unit
+                            else:
+                                data[corp["stock_code"]]["PL"]["Q"][h[0]] = 0
+                        if h[1] == "누계실적":
+                            if h[2] != "-":
+                                data[corp["stock_code"]]["PL"]["Y"][h[0]] = float(h[2].replace(",", "")) * unit
+                            else:
+                                data[corp["stock_code"]]["PL"]["Y"][h[0]] = 0
+        # print(data)
+        return data
+    
 
     def get_req_lists(self, lists):
         req_list = []
