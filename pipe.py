@@ -356,7 +356,7 @@ class Pipe:
 
                 # html_table = parser.make2d(soup)
                 # print(html_table)
-                table = soup.find(id=True)
+                table = soup.find("table", id=lambda value: value and value.startswith("XFormD1"))
                 # if table["id"] == "XFormD1_Form0_RepeatTable0": # 코스피
                 #     pass
                 # elif table["id"] == "XFormD1_Form0_RepeatTable1": # 코스닥
@@ -377,6 +377,12 @@ class Pipe:
                                 unit = 1000000
                             elif tmp2 == "억원":
                                 unit = 100000000
+                            elif tmp2 == "십억원":
+                                unit = 1000000000
+                            elif tmp2 == "백억원":
+                                unit = 10000000000
+                            elif tmp2 == "천억원":
+                                unit = 100000000000
                             elif tmp2 == "조원":
                                 unit = 1000000000000
                             break
@@ -395,15 +401,15 @@ class Pipe:
                                 data[corp["stock_code"]]["PL"]["Y"][h[0]] = 0
         print(data)
         return data
-    
-    
-        def get_provisional_performance_reporting_corp_info_with_code(self, code, base_date, target_date=None):
+
+    def get_provisional_performance_reporting_corp_info_with_code(self, code, base_date, target_date=None):
         from html_table_parser import parser_functions as parser
+
         corp_code_list = None
         if target_date is None:
-            corp_code_list = db.getProvisionalPerformanceReportingInfo(base_date)
+            corp_code_list = db.getProvisionalPerformanceReportingInfoWithStockCode(code, base_date)
         else:
-            corp_code_list = db.getProvisionalPerformanceReportingInfo(base_date, target_date)
+            corp_code_list = db.getProvisionalPerformanceReportingInfoWithStockCode(code, base_date, target_date)
         print(corp_code_list)
         data = {}
         unit = None
@@ -422,7 +428,7 @@ class Pipe:
 
                 # html_table = parser.make2d(soup)
                 # print(html_table)
-                table = soup.find(id=True)
+                table = soup.find("table", id=lambda value: value and value.startswith("XFormD1"))
                 # if table["id"] == "XFormD1_Form0_RepeatTable0": # 코스피
                 #     pass
                 # elif table["id"] == "XFormD1_Form0_RepeatTable1": # 코스닥
@@ -444,6 +450,12 @@ class Pipe:
                                 unit = 1000000
                             elif tmp2 == "억원":
                                 unit = 100000000
+                            elif tmp2 == "십억원":
+                                unit = 1000000000
+                            elif tmp2 == "백억원":
+                                unit = 10000000000
+                            elif tmp2 == "천억원":
+                                unit = 100000000000
                             elif tmp2 == "조원":
                                 unit = 1000000000000
                             break
