@@ -145,7 +145,7 @@ class Pipe:
                 return False, None
 
     def get_list(self, corp_code=None, bgn_de=None, end_de=None, last_reprt_at="Y", pblntf_ty=None,
-                 pblntf_detail_ty=None, corp_cls=None):
+                 pblntf_detail_ty=None, corp_cls=None, req_type=None):
         retObj = None
         if corp_code:
             ret, code = self.get_corp_code(corp_code)
@@ -154,7 +154,7 @@ class Pipe:
             code = None
         if ret:
             return di.get_list_json(self.api_key, code, bgn_de, end_de, last_reprt_at, pblntf_ty, pblntf_detail_ty,
-                                    corp_cls)
+                                    corp_cls, req_type)
 
     def get_company_info(self, corp_code):
         ret, code = self.get_corp_code(corp_code)
