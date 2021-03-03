@@ -86,6 +86,13 @@ def get_list_json(crtfc_key, corp_code=None, bgn_de=None, end_de=None, last_repr
         retJson["list"] = []
         return retJson
     else:
+        tmp_list = []
+        for l in list_data["list"]:
+            tmp = l
+            if "[기재정정]" in l["report_nm"]:
+                tmp["report_nm"] = l["report_nm"].replace("[기재정정]", "")
+            tmp["report_nm"] = "{} {}".format(tmp["report_nm"].split(" ")[1], tmp["report_nm"].split(" ")[0])
+            tmp_list.append(tmp)
         if list_data["total_page"] != list_data["page_no"]:
             cur_page = list_data["page_no"] + 1
             tot_page = list_data["total_page"]
@@ -94,11 +101,17 @@ def get_list_json(crtfc_key, corp_code=None, bgn_de=None, end_de=None, last_repr
                 params["page_no"] = page
                 res = requests.get(url, params=params)
                 list_data = json.loads(res.content)
-                retJson["list"].extend(list_data["list"])
+                for ll in list_data["list"]:
+                    tmp = ll
+                    if "[기재정정]" in ll["report_nm"]:
+                        tmp["report_nm"] = ll["report_nm"].replace("[기재정정]", "")
+                    tmp["report_nm"] = "{} {}".format(tmp["report_nm"].split(" ")[1], tmp["report_nm"].split(" ")[0])
+                    tmp_list.append(tmp)
             # print(retJson["total_count"], len(retJson["list"]))
         if "page_no" in retJson.keys(): retJson.pop("page_no", None)
         if "page_count" in retJson.keys(): retJson.pop("page_count", None)
         if "total_page" in retJson.keys(): retJson.pop("total_page", None)
+        retJson["list"] = sorted(tmp_list, key=lambda k:k["report_nm"], reverse=True)
         return retJson
 
 
