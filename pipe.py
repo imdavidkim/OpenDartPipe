@@ -528,6 +528,7 @@ class Pipe:
         ret = None
         yyyy_report_nm = None
         trm_nm = {}
+        account_name = ""
         for bsns_year, reprt_code in req_list:
             if reprt_code == "11011":
                 yyyy_report_nm = "{} 4/4".format(bsns_year)
@@ -549,6 +550,20 @@ class Pipe:
                 # print(ret)
                 if "list" in ret.keys():
                     for l in ret["list"]:
+                        if l["account_id"] in ["ifrs-full_CashFlowsFromUsedInOperatingActivities",
+                                               "ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+                                               "ifrs-full_PurchaseOfIntangibleAssetsClassifiedAsInvestingActivities",
+                                               "ifrs-full_Revenue",
+                                               "dart_OperatingIncomeLoss",
+                                               "ifrs-full_ProfitLoss"]:
+                            if l["account_id"] == "ifrs-full_CashFlowsFromUsedInOperatingActivities": account_name = "영업활동현금흐름"
+                            if l["account_id"] == "ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities": account_name = "유형자산의 취득"
+                            if l["account_id"] == "ifrs-full_PurchaseOfIntangibleAssetsClassifiedAsInvestingActivities": account_name = "무형자산의 취득"
+                            if l["account_id"] == "ifrs-full_Revenue": account_name = "매출액"
+                            if l["account_id"] == "dart_OperatingIncomeLoss": account_name = "영업이익"
+                            if l["account_id"] == "ifrs-full_ProfitLoss": account_name = "당기순이익"
+                        else:
+                            account_name = l["account_nm"]
                         curr = l
                         print(l)
                         # if reprt_code == "11011": print(l)
@@ -561,13 +576,14 @@ class Pipe:
                         if l["sj_nm"] not in retDict[l["fs_nm"]].keys():
                             retDict[l["fs_nm"]][l["sj_nm"]] = {}
                         # print(retDict)
-                        if l["account_nm"] not in retDict[l["fs_nm"]][l["sj_nm"]].keys():
-                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]] = {}
+                        if account_name not in retDict[l["fs_nm"]][l["sj_nm"]].keys():
+                            retDict[l["fs_nm"]][l["sj_nm"]][account_name] = {}
                         # print(retDict)
                         if l["sj_nm"] == "재무상태표" or l["sj_nm"] == "현금흐름표" or l["sj_nm"] == "자본변동표":
-                            if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
-                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm] = {}
-                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["{} Rate".format(yyyy_report_nm)] = {}
+
+                            if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][account_name].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm] = {}
+                                retDict[l["fs_nm"]][l["sj_nm"]][account_name]["{} Rate".format(yyyy_report_nm)] = {}
                             if reprt_code == "11011":  # and l["fs_div"] == "CFS":
                                 if "bfefrmtrm_dt" not in l.keys() and "bfefrmtrm_nm" in l.keys():
                                     l["bfefrmtrm_dt"] = l["bfefrmtrm_nm"]
@@ -577,30 +593,30 @@ class Pipe:
                                     l["thstrm_dt"] = l["thstrm_nm"]
 
                                 if "bfefrmtrm_dt" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][trm_nm["bfefrmtrm_nm"]] = l["bfefrmtrm_amount"] if l[
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm][trm_nm["bfefrmtrm_nm"]] = l["bfefrmtrm_amount"] if l[
                                                                                                "bfefrmtrm_amount"] != "-" and \
                                                                                            l[
                                                                                                "bfefrmtrm_amount"] != "" else "0"
                                 if "frmtrm_dt" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][trm_nm["frmtrm_nm"]] = \
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm][trm_nm["frmtrm_nm"]] = \
                                         l["frmtrm_amount"] if l["frmtrm_amount"] != "-" and l[
                                             "frmtrm_amount"] != "" else "0"
                                     if "bfefrmtrm_dt" in l.keys():
-                                        if retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][trm_nm["bfefrmtrm_nm"]] != "0" and l["frmtrm_amount"] != "-" and l[
+                                        if retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm][trm_nm["bfefrmtrm_nm"]] != "0" and l["frmtrm_amount"] != "-" and l[
                                             "frmtrm_amount"] != "":
-                                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][
+                                            retDict[l["fs_nm"]][l["sj_nm"]][account_name][
                                                 "{} Rate".format(yyyy_report_nm)]["전기"] = round((float(
                                                 l["frmtrm_amount"].replace(",", "")) - float(
                                                 l["bfefrmtrm_amount"].replace(",", ""))) / float(
                                                 l["bfefrmtrm_amount"].replace(",", "")) * 100, 2)
                                 if "thstrm_dt" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][trm_nm["thstrm_nm"]] = \
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm][trm_nm["thstrm_nm"]] = \
                                         l["thstrm_amount"] if l["thstrm_amount"] != "-" and l[
                                             "thstrm_amount"] != "" else "0"
                                     if "frmtrm_dt" in l.keys():
-                                        if retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][trm_nm["frmtrm_nm"]] != "0" and l["thstrm_amount"] != "-" and l[
+                                        if retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm][trm_nm["frmtrm_nm"]] != "0" and l["thstrm_amount"] != "-" and l[
                                             "thstrm_amount"] != "":
-                                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][
+                                            retDict[l["fs_nm"]][l["sj_nm"]][account_name][
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_amount"].replace(",", "")) - float(
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
@@ -612,29 +628,31 @@ class Pipe:
                                     l["thstrm_dt"] = l["thstrm_nm"]
 
                                 # if "frmtrm_dt" in l.keys() and "frmtrm_add_amount" in l.keys():
-                                #     retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][trm_nm["frmtrm_nm"]] = \
+                                #     retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm][trm_nm["frmtrm_nm"]] = \
                                 #     l["frmtrm_add_amount"] if l["frmtrm_add_amount"] != "-" else "0"
                                 # if "thstrm_dt" in l.keys() and "thstrm_add_amount" in l.keys():
-                                #     retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][trm_nm["thstrm_nm"]] = \
+                                #     retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm][trm_nm["thstrm_nm"]] = \
                                 #     l["thstrm_add_amount"] if l["thstrm_add_amount"] != "-" else "0"
                                 if "frmtrm_dt" in l.keys() and "frmtrm_amount" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][trm_nm["frmtrm_nm"]] = \
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm][trm_nm["frmtrm_nm"]] = \
                                         l["frmtrm_amount"] if l["frmtrm_amount"] != "-" and l[
                                             "frmtrm_amount"] != "" else "0"
                                 if "thstrm_dt" in l.keys() and "thstrm_amount" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][trm_nm["thstrm_nm"]] = \
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm][trm_nm["thstrm_nm"]] = \
                                         l["thstrm_amount"] if l["thstrm_amount"] != "-" and l[
                                             "thstrm_amount"] != "" else "0"
                                     if "frmtrm_dt" in l.keys():
-                                        if retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][yyyy_report_nm][trm_nm["frmtrm_nm"]] != "0" and l["thstrm_amount"] != "-" and l[
+                                        if retDict[l["fs_nm"]][l["sj_nm"]][account_name][yyyy_report_nm][trm_nm["frmtrm_nm"]] != "0" and l["thstrm_amount"] != "-" and l[
                                             "thstrm_amount"] != "":
-                                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]][
+                                            retDict[l["fs_nm"]][l["sj_nm"]][account_name][
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_amount"].replace(",", "")) - float(
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
                                                 l["frmtrm_amount"].replace(",", "")) * 100, 2)
 
                         if l["sj_nm"] == "손익계산서" or l["sj_nm"] == "포괄손익계산서":
+                            if account_name == "영업이익":
+                                pass
                             if reprt_code == "11011":
                                 if "frmtrm_dt" not in l.keys() and "frmtrm_nm" in l.keys():
                                     l["frmtrm_dt"] = l["frmtrm_nm"]
@@ -646,39 +664,39 @@ class Pipe:
                                     l["frmtrm_amount"] = l["frmtrm_q_amount"]
                                 if "thstrm_dt" not in l.keys() and "thstrm_nm" in l.keys():
                                     l["thstrm_dt"] = l["thstrm_nm"]
-                            if "누계" not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
-                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"] = {}
-                            if "당기" not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]].keys():
-                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"] = {}
-                            if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"].keys():
-                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm] = {}
-                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][
+                            if "누계" not in retDict[l["fs_nm"]][l["sj_nm"]][account_name].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"] = {}
+                            if "당기" not in retDict[l["fs_nm"]][l["sj_nm"]][account_name].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"] = {}
+                            if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][yyyy_report_nm] = {}
+                                retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][
                                     "{} Rate".format(yyyy_report_nm)] = {"전기": None, "당기": None}
-                            if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"].keys():
-                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm] = {}
-                                retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][
+                            if yyyy_report_nm not in retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"].keys():
+                                retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"][yyyy_report_nm] = {}
+                                retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"][
                                     "{} Rate".format(yyyy_report_nm)] = {"전기": None, "당기": None}
 
                             if reprt_code == "11011":
                                 # if reprt_code == "11011" and l["fs_div"] == "CFS":
                                 if "bfefrmtrm_dt" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][yyyy_report_nm][
                                         trm_nm["bfefrmtrm_nm"]] = l["bfefrmtrm_amount"] if l[
                                                                                                "bfefrmtrm_amount"] != "-" and \
                                                                                            l[
                                                                                                "bfefrmtrm_amount"] != "" else "0"
                                 if "frmtrm_dt" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][yyyy_report_nm][
                                         trm_nm["frmtrm_nm"]] = l["frmtrm_amount"] if l["frmtrm_amount"] != "-" and l[
                                         "frmtrm_amount"] != "" else "0"
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm][
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"][yyyy_report_nm][
                                         trm_nm["frmtrm_nm"]] = l["frmtrm_amount"] if l["frmtrm_amount"] != "-" and l[
                                         "frmtrm_amount"] != "" else "0"
                                     if "bfefrmtrm_dt" in l.keys():
-                                        if retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                        if retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][yyyy_report_nm][
                                             trm_nm["bfefrmtrm_nm"]] != "0" and l["frmtrm_amount"] != "-" and l[
                                             "frmtrm_amount"] != "":
-                                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][
+                                            retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][
                                                 "{} Rate".format(yyyy_report_nm)]["전기"] = round((float(
                                                 l["frmtrm_amount"].replace(",", "")) - float(
                                                 l["bfefrmtrm_amount"].replace(",", ""))) / float(
@@ -687,17 +705,17 @@ class Pipe:
                                                                                                      l[
                                                                                                          "bfefrmtrm_amount"] != "" else 0
                                 if "thstrm_dt" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][yyyy_report_nm][
                                         trm_nm["thstrm_nm"]] = l["thstrm_amount"] if l["thstrm_amount"] != "-" and l[
                                         "thstrm_amount"] != "" else "0"
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm][
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"][yyyy_report_nm][
                                         trm_nm["thstrm_nm"]] = l["thstrm_amount"] if l["thstrm_amount"] != "-" and l[
                                         "thstrm_amount"] != "" else "0"
                                     if "frmtrm_dt" in l.keys():
-                                        if retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                        if retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][yyyy_report_nm][
                                             trm_nm["frmtrm_nm"]] != "0" and l["thstrm_amount"] != "-" and l[
                                             "thstrm_amount"] != "":
-                                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][
+                                            retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_amount"].replace(",", "")) - float(
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
@@ -705,7 +723,7 @@ class Pipe:
                                                                                                       "thstrm_amount"] != "" and \
                                                                                                   l[
                                                                                                       "frmtrm_amount"] != "" else 0
-                                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][
+                                            retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"][
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_amount"].replace(",", "")) - float(
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
@@ -717,18 +735,18 @@ class Pipe:
                                 # if l["account_nm"] == "영업이익" and corp_code == "00126308":
                                 #     print()
                                 if "frmtrm_dt" in l.keys() and "frmtrm_add_amount" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][yyyy_report_nm][
                                         trm_nm["frmtrm_nm"]] = l["frmtrm_add_amount"] if l[
                                                                                         "frmtrm_add_amount"] != "-" else "0"
                                 if "thstrm_dt" in l.keys() and "thstrm_add_amount" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][yyyy_report_nm][
                                         trm_nm["thstrm_nm"]] = l["thstrm_add_amount"] if l[
                                                                                         "thstrm_add_amount"] != "-" else "0"
                                     if "frmtrm_dt" in l.keys():
-                                        if retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][yyyy_report_nm][
+                                        if retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][yyyy_report_nm][
                                             trm_nm["frmtrm_nm"]] != "0" and l["thstrm_add_amount"] != "-" and l[
                                             "thstrm_add_amount"] != "":
-                                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["누계"][
+                                            retDict[l["fs_nm"]][l["sj_nm"]][account_name]["누계"][
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_add_amount"].replace(",", "")) - float(
                                                 l["frmtrm_add_amount"].replace(",", ""))) / float(
@@ -737,18 +755,18 @@ class Pipe:
                                                                                                       l[
                                                                                                           "frmtrm_add_amount"] != "" else 0
                                 if "frmtrm_dt" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm][
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"][yyyy_report_nm][
                                         trm_nm["frmtrm_nm"]] = l["frmtrm_amount"] if l["frmtrm_amount"] != "-" and l[
                                         "frmtrm_amount"] != "" else "0"
                                 if "thstrm_dt" in l.keys():
-                                    retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm][
+                                    retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"][yyyy_report_nm][
                                         trm_nm["thstrm_nm"]] = l["thstrm_amount"] if l["thstrm_amount"] != "-" and l[
                                         "frmtrm_amount"] != "" else "0"
                                     if "frmtrm_dt" in l.keys():
-                                        if retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][yyyy_report_nm][
+                                        if retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"][yyyy_report_nm][
                                             trm_nm["frmtrm_nm"]] != "0" and l["thstrm_amount"] != "-" and l[
                                             "thstrm_amount"] != "":
-                                            retDict[l["fs_nm"]][l["sj_nm"]][l["account_nm"]]["당기"][
+                                            retDict[l["fs_nm"]][l["sj_nm"]][account_name]["당기"][
                                                 "{} Rate".format(yyyy_report_nm)]["당기"] = round((float(
                                                 l["thstrm_amount"].replace(",", "")) - float(
                                                 l["frmtrm_amount"].replace(",", ""))) / float(
