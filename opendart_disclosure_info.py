@@ -166,15 +166,19 @@ def get_document_xhml(api_key, rcp_no, stock_code, corp_code, corp_name, dir_nam
         pass
     zf = zipfile.ZipFile(io.BytesIO(r.content))
     info_list = zf.infolist()
-    xml_data = zf.read(info_list[0].filename)
-    try:
-        xml_text = xml_data.replace(b'encoding="utf-8"', b'encoding="euc-kr"').decode('euc-kr')
-        # xml_text = xml_data.decode('x-windows-949')
-    except Exception as e:
-        # print(rcp_no, stock_code, corp_code, corp_name, xml_data)
-        xml_text = xml_data.replace(b'encoding="utf-8"', b'encoding="euc-kr"').decode('cp949')
+    print(info_list)
+    for i in range(len(info_list)):
+        xml_data = zf.read(info_list[i].filename)
+        try:
+            xml_text = xml_data.replace(b'encoding="utf-8"', b'encoding="euc-kr"').decode('euc-kr')
+            # xml_text = xml_data.decode('x-windows-949')
+        except Exception as e:
+            # print(rcp_no, stock_code, corp_code, corp_name, xml_data)
+            xml_text = xml_data.replace(b'encoding="utf-8"', b'encoding="euc-kr"').decode('cp949')
 
-    # save document to cache
-    with open(fn, 'wt') as f:
-        f.write(xml_text)
-    return xml_text
+        # save document to cache
+        fn = os.path.join(work_path, '[{}][{}]{}-{}_{}.xml'.format(stock_code, corp_code, corp_name, rcp_no, info_list[i].filename))
+        with open(fn, 'wt') as f:
+            f.write(xml_text)
+
+    return info_list
